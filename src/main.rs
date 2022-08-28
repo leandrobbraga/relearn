@@ -96,7 +96,9 @@ where
 
     loop {
         let player = &players[player_idx % 2];
+
         let action = player.play(&game.board, game.available_actions());
+        
         if game.act(action).is_ok() {
             player_idx += 1;
         };

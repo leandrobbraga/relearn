@@ -1,5 +1,4 @@
 use crate::game::Board;
-use rand::prelude::*;
 use std::io;
 
 pub trait Player {
@@ -27,6 +26,7 @@ pub struct RandomPlayer;
 
 impl Player for RandomPlayer {
     fn play(&self, _: &Board, available_moves: Vec<usize>) -> usize {
-        *available_moves.choose(&mut rand::thread_rng()).unwrap()
+        let i = fastrand::usize(..available_moves.len());
+        available_moves[i]
     }
 }
