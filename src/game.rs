@@ -123,7 +123,7 @@ impl Display for Board {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum Player {
     X,
     O,

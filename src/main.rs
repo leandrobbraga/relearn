@@ -1,46 +1,89 @@
 mod game;
 mod player;
 
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::{fmt::Display, ops::AddAssign, thread};
 
 use game::Game;
 use player::{Player, RandomPlayer};
-use rayon::prelude::*;
+
+static CORES: usize = 24;
+static GAME_COUNT: u64 = 1_000_000_000;
+
+struct GamesResult {
+    victories: u64,
+    draws: u64,
+}
+
+impl AddAssign for GamesResult {
+    fn add_assign(&mut self, rhs: Self) {
+        self.victories += rhs.victories;
+        self.draws += rhs.draws;
+    }
+}
+
+impl Display for GamesResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Win: {}, Draw: {}, Loss: {}",
+            self.victories as f64 / GAME_COUNT as f64,
+            self.draws as f64 / GAME_COUNT as f64,
+            (GAME_COUNT - self.victories - self.draws) as f64 / GAME_COUNT as f64
+        )
+    }
+}
 
 fn main() {
     let player_1 = RandomPlayer {};
     let player_2 = RandomPlayer {};
 
-    let victories = AtomicU64::new(0);
-    let draws = AtomicU64::new(0);
-    let count = 1_000_000_000;
+    let mut games_results = GamesResult {
+        victories: 0,
+        draws: 0,
+    };
 
-    (0..count).into_par_iter().for_each(|_| {
-        let winner = play_game(&player_1, &player_2);
+    thread::scope(|s| {
+        let mut handlers = Vec::with_capacity(CORES);
+
+        for _ in 0..CORES {
+            handlers.push(s.spawn(|| play_games(&player_1, &player_2, GAME_COUNT as usize / CORES)))
+        }
+
+        for handler in handlers {
+            games_results += handler.join().unwrap();
+        }
+    });
+
+    print!("{games_results}")
+}
+
+fn play_games<T, U>(player_1: &T, player_2: &U, n: usize) -> GamesResult
+where
+    T: Player,
+    U: Player,
+{
+    let mut victories = 0;
+    let mut draws = 0;
+
+    // NOTE: This code is not correct because it just truncates the division result,
+    // but it's fine for this application.
+    for _ in 0..n {
+        let winner = play_game(player_1, player_2);
 
         match winner {
             Some(game::Player::X) => {
-                victories.fetch_add(1, Ordering::Relaxed);
+                victories += 1;
             }
             None => {
-                draws.fetch_add(1, Ordering::Relaxed);
+                draws += 1;
             }
             _ => (),
         };
-    });
+    }
 
-    let victories = victories.load(Ordering::Relaxed);
-    let draws = draws.load(Ordering::Relaxed);
-
-    println!(
-        "Win: {}, Draw: {}, Loss: {}",
-        victories as f64 / count as f64,
-        draws as f64 / count as f64,
-        (count - victories - draws) as f64 / count as f64
-    )
+    GamesResult { victories, draws }
 }
 
-/// Play a single game and return the winner for the match
 fn play_game<T, U>(player_1: &T, player_2: &U) -> Option<game::Player>
 where
     T: Player,
