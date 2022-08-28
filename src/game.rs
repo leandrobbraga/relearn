@@ -5,6 +5,11 @@ pub struct Game {
     pub current_player: Player,
 }
 
+pub enum GameState {
+    Finished(Option<Player>),
+    OnGoing,
+}
+
 impl Game {
     pub fn new() -> Self {
         Game {
@@ -41,11 +46,15 @@ impl Game {
         }
     }
 
-    pub fn has_finished(&self) -> bool {
-        if self.winner().is_some() {
-            true
+    pub fn state(&self) -> GameState {
+        let winner = self.winner();
+
+        if winner.is_some() {
+            GameState::Finished(winner)
+        } else if self.board.is_full() {
+            GameState::Finished(None)
         } else {
-            self.board.is_full()
+            GameState::OnGoing
         }
     }
 

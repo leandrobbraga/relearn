@@ -94,13 +94,15 @@ where
 
     let mut player_idx = 0;
 
-    while !game.has_finished() {
+    loop {
         let player = &players[player_idx % 2];
         let action = player.play(&game.board, game.available_actions());
         if game.act(action).is_ok() {
             player_idx += 1;
         };
-    }
 
-    game.winner()
+        if let game::GameState::Finished(player) = game.state() {
+            break player;
+        }
+    }
 }
