@@ -101,8 +101,8 @@ where
             player_idx += 1;
         };
 
-        if let game::GameState::Finished(player) = game.state() {
-            break player;
+        if let game::GameState::Finished(winner) = game.state() {
+            break winner;
         }
     }
 }
