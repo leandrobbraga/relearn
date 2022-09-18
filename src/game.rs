@@ -23,7 +23,8 @@ impl<'a> Game<'a> {
     }
 
     pub fn play(&mut self) -> Option<Player> {
-        let mut player_idx = 0;
+        // This ensures that the players get randomly assigned as the first or second
+        let mut player_idx = fastrand::usize(0..=1);
 
         let winner = loop {
             let player = &self.players[player_idx % 2];

@@ -6,7 +6,7 @@ use std::{fmt::Display, ops::AddAssign, thread};
 use game::Game;
 use player::{Player, RandomPlayer};
 
-static GAME_COUNT: u64 = 1_000_000_000;
+static GAME_COUNT: u64 = 100_000;
 
 struct GamesResult {
     victories: u64,
@@ -26,10 +26,11 @@ impl Display for GamesResult {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Win: {}, Draw: {}, Loss: {}",
+            "Win: {}, Draw: {}, Loss: {}, Game Count: {}",
             self.victories as f64 / GAME_COUNT as f64,
             self.draws as f64 / GAME_COUNT as f64,
-            (GAME_COUNT - self.victories - self.draws) as f64 / GAME_COUNT as f64
+            (GAME_COUNT - self.victories - self.draws) as f64 / GAME_COUNT as f64,
+            self.losses + self.victories + self.draws
         )
     }
 }
