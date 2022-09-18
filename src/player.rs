@@ -1,12 +1,12 @@
 use crate::game::Board;
 use std::io;
 
+pub struct HumanPlayer;
+pub struct RandomPlayer;
+
 pub trait Player {
     fn play(&self, board: &Board, available_moves: Vec<usize>) -> usize;
 }
-
-#[derive(Clone)]
-pub struct HumanPlayer;
 
 impl Player for HumanPlayer {
     fn play(&self, board: &Board, available_moves: Vec<usize>) -> usize {
@@ -21,8 +21,6 @@ impl Player for HumanPlayer {
         action
     }
 }
-
-pub struct RandomPlayer;
 
 impl Player for RandomPlayer {
     fn play(&self, _: &Board, available_moves: Vec<usize>) -> usize {
