@@ -1,8 +1,9 @@
 use std::fmt::Display;
 
-pub struct Game {
+pub struct Game<'a> {
     pub board: Board,
-    pub current_player: Player,
+    current_player: Player,
+    players: [&'a dyn crate::Player; 2],
 }
 
 pub enum GameState {
@@ -10,17 +11,40 @@ pub enum GameState {
     OnGoing,
 }
 
-impl Game {
-    pub fn new() -> Self {
+impl<'a> Game<'a> {
+    pub fn new(player_1: &'a dyn crate::Player, player_2: &'a dyn crate::Player) -> Self {
         Game {
             board: Board {
                 fields: Default::default(),
             },
             current_player: Player::X,
+            players: [player_1, player_2],
         }
     }
 
-    pub fn winner(&self) -> Option<Player> {
+    pub fn play(&mut self) -> Option<Player> {
+        let mut player_idx = 0;
+
+        let winner = loop {
+            let player = &self.players[player_idx % 2];
+
+            let action = player.play(&self.board, self.available_actions());
+
+            if self.act(action).is_ok() {
+                player_idx += 1;
+            };
+
+            if let GameState::Finished(winner) = self.state() {
+                break winner;
+            }
+        };
+
+        self.board.reset();
+
+        winner
+    }
+
+    fn winner(&self) -> Option<Player> {
         match self.board.fields {
             [Some(Player::X), Some(Player::X), Some(Player::X), _, _, _, _, _, _]
             | [_, _, _, Some(Player::X), Some(Player::X), Some(Player::X), _, _, _]
@@ -46,7 +70,7 @@ impl Game {
         }
     }
 
-    pub fn state(&self) -> GameState {
+    fn state(&self) -> GameState {
         let winner = self.winner();
 
         if winner.is_some() {
@@ -58,7 +82,7 @@ impl Game {
         }
     }
 
-    pub fn act(&mut self, position: usize) -> Result<(), MoveError> {
+    fn act(&mut self, position: usize) -> Result<(), MoveError> {
         if !(0..9).contains(&position) {
             return Err(MoveError::OutOfBound);
         };
@@ -75,7 +99,7 @@ impl Game {
         Ok(())
     }
 
-    pub fn available_actions(&self) -> Vec<usize> {
+    fn available_actions(&self) -> Vec<usize> {
         self.board.available_fields()
     }
 }
@@ -104,6 +128,10 @@ impl Board {
         }
 
         available_fields
+    }
+
+    pub fn reset(&mut self) {
+        self.fields = Default::default();
     }
 }
 

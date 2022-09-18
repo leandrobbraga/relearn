@@ -6,7 +6,7 @@ use std::{fmt::Display, ops::AddAssign, thread};
 use game::Game;
 use player::{Player, RandomPlayer};
 
-static GAME_COUNT: u64 = 1_000;
+static GAME_COUNT: u64 = 1_000_000_000;
 
 struct GamesResult {
     victories: u64,
@@ -68,17 +68,15 @@ fn main() {
     print!("{games_results}")
 }
 
-fn play_games<T, U>(player_1: &T, player_2: &U, n: usize) -> GamesResult
-where
-    T: Player,
-    U: Player,
-{
+fn play_games(player_1: &dyn Player, player_2: &dyn Player, n: usize) -> GamesResult {
     let mut victories = 0;
     let mut draws = 0;
     let mut losses = 0;
 
+    let mut game = Game::new(player_1, player_2);
+
     for _ in 0..n {
-        let winner = play_game(player_1, player_2);
+        let winner = game.play();
 
         match winner {
             Some(game::Player::X) => {
@@ -97,30 +95,5 @@ where
         victories,
         draws,
         losses,
-    }
-}
-
-fn play_game<T, U>(player_1: &T, player_2: &U) -> Option<game::Player>
-where
-    T: Player,
-    U: Player,
-{
-    let players: [Box<&dyn Player>; 2] = [Box::new(player_1), Box::new(player_2)];
-    let mut game = Game::new();
-
-    let mut player_idx = 0;
-
-    loop {
-        let player = &players[player_idx % 2];
-
-        let action = player.play(&game.board, game.available_actions());
-
-        if game.act(action).is_ok() {
-            player_idx += 1;
-        };
-
-        if let game::GameState::Finished(winner) = game.state() {
-            break winner;
-        }
     }
 }
