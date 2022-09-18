@@ -27,7 +27,7 @@ impl<'a> Game<'a> {
         let mut player_idx = fastrand::usize(0..=1);
 
         let winner = loop {
-            let player = &self.players[player_idx % 2];
+            let player = self.players[player_idx % 2];
 
             let action = player.play(&self.board, self.available_actions());
 

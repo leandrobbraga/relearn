@@ -6,7 +6,7 @@ use std::{fmt::Display, ops::AddAssign, thread};
 use game::Game;
 use player::{Player, RandomPlayer};
 
-static GAME_COUNT: u64 = 100_000;
+static GAME_COUNT: u64 = 1_000_000_000;
 
 struct GamesResult {
     victories: u64,
