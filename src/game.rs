@@ -72,30 +72,47 @@ impl TicTacToe {
         }
     }
 
-    fn act(&mut self, position: usize) -> Result<(), MoveError> {
-        let next_player = self.current_player.next_player();
-        let player = std::mem::replace(&mut self.current_player, next_player);
+    fn act(&mut self, player: Player, position: usize) -> Result<(), MoveError> {
+        if !(0..9).contains(&position) {
+            return Err(MoveError::OutOfBound);
+        };
 
-        self.board.act(player, position).map_err(|err| {
-            self.current_player = self.current_player.next_player();
-            err
-        })
+        let field = &mut self.board.fields[position];
+
+        if field.is_some() {
+            return Err(MoveError::NonEmptyField);
+        }
+
+        if let Some(index) = self
+            .board
+            .available_fields
+            .iter()
+            .position(|value| *value == position)
+        {
+            self.board.available_fields.swap_remove(index);
+        }
+
+        field.replace(player);
+
+        Ok(())
     }
 }
 
 impl Game for TicTacToe {
     fn play(&mut self, player_1: &impl crate::Player, player_2: &impl crate::Player) -> GameResult {
-        // This ensures that the players get randomly assigned as the first or second
-        let mut first_player = true;
-
         let winner = loop {
-            let action = match first_player {
-                true => player_1.play(self, &self.board.available_fields),
-                false => player_2.play(self, &self.board.available_fields),
+            let action = match self.current_player {
+                Player::X => player_1.play(self, &self.board.available_fields),
+                Player::O => player_2.play(self, &self.board.available_fields),
             };
 
-            if self.act(action).is_ok() {
-                first_player = !first_player;
+            let next_player = self.current_player.next_player();
+            let current_player = std::mem::replace(&mut self.current_player, next_player);
+
+            if self.act(current_player, action).is_err() {
+                // The same player tries again
+                self.current_player = self.current_player.next_player();
+                continue;
             };
 
             if let State::Finished(winner) = self.is_terminal() {
@@ -147,30 +164,6 @@ impl Board {
         self.fields = Default::default();
         self.available_fields.clear();
         self.available_fields.extend(0..9);
-    }
-
-    fn act(&mut self, player: Player, position: usize) -> Result<(), MoveError> {
-        if !(0..9).contains(&position) {
-            return Err(MoveError::OutOfBound);
-        };
-
-        let field = &mut self.fields[position];
-
-        if field.is_some() {
-            return Err(MoveError::NonEmptyField);
-        }
-
-        // SAFETY: The original vector is ordered and we only remove elements, keeping it ordered.
-        let idx = unsafe {
-            self.available_fields
-                .binary_search(&position)
-                .unwrap_unchecked()
-        };
-        self.available_fields.remove(idx);
-
-        field.replace(player);
-
-        Ok(())
     }
 }
 
