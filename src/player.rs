@@ -1,16 +1,16 @@
-use crate::game::Board;
+use crate::game::Game;
 use std::io;
 
 pub struct HumanPlayer;
 pub struct RandomPlayer;
 
 pub trait Player {
-    fn play(&self, board: &Board, available_moves: &[usize]) -> usize;
+    fn play(&self, game: &impl Game, available_moves: &[usize]) -> usize;
 }
 
 impl Player for HumanPlayer {
-    fn play(&self, board: &Board, available_moves: &[usize]) -> usize {
-        println!("{board}");
+    fn play(&self, game: &impl Game, available_moves: &[usize]) -> usize {
+        println!("{game}");
         println!("Available moves: {available_moves:?}");
 
         let mut buf = String::new();
@@ -23,7 +23,7 @@ impl Player for HumanPlayer {
 }
 
 impl Player for RandomPlayer {
-    fn play(&self, _: &Board, available_moves: &[usize]) -> usize {
+    fn play(&self, _: &impl Game, available_moves: &[usize]) -> usize {
         let i = fastrand::usize(..available_moves.len());
         available_moves[i]
     }

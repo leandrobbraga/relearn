@@ -69,7 +69,7 @@ fn main() {
     print!("{games_results}")
 }
 
-fn play_games(player_1: &dyn Player, player_2: &dyn Player, n: usize) -> GamesResult {
+fn play_games(player_1: &impl Player, player_2: &impl Player, n: usize) -> GamesResult {
     let mut victories = 0;
     let mut draws = 0;
     let mut losses = 0;

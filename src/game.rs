@@ -1,13 +1,31 @@
 use std::fmt::Display;
 
-pub trait Game {
+pub trait Game: Display {
     fn play(&mut self) -> GameResult;
+
+    fn is_terminal(&self) -> State;
+
+    fn state(&self) -> &Board;
 }
 
-pub struct TicTacToe<'a> {
+pub enum MoveError {
+    NonEmptyField,
+    OutOfBound,
+}
+
+pub struct Board {
+    pub fields: [Option<Player>; 9],
+    pub available_fields: Vec<usize>,
+}
+pub struct TicTacToe<'a, T, U>
+where
+    T: crate::Player,
+    U: crate::Player,
+{
     pub board: Board,
     current_player: Player,
-    players: [&'a dyn crate::Player; 2],
+    player_1: &'a T,
+    player_2: &'a U,
 }
 
 pub enum State {
@@ -26,12 +44,17 @@ pub enum GameResult {
     Loss,
 }
 
-impl<'a> TicTacToe<'a> {
-    pub fn new(player_1: &'a dyn crate::Player, player_2: &'a dyn crate::Player) -> Self {
+impl<'a, T, U> TicTacToe<'a, T, U>
+where
+    T: crate::Player,
+    U: crate::Player,
+{
+    pub fn new(player_1: &'a T, player_2: &'a U) -> Self {
         TicTacToe {
             board: Board::new(),
             current_player: Player::X,
-            players: [player_1, player_2],
+            player_1,
+            player_2,
         }
     }
 
@@ -61,18 +84,6 @@ impl<'a> TicTacToe<'a> {
         }
     }
 
-    fn state(&self) -> State {
-        let winner = self.winner();
-
-        if winner.is_some() {
-            State::Finished(winner)
-        } else if self.board.is_full() {
-            State::Finished(None)
-        } else {
-            State::OnGoing
-        }
-    }
-
     fn act(&mut self, position: usize) -> Result<(), MoveError> {
         let next_player = self.current_player.next_player();
         let player = std::mem::replace(&mut self.current_player, next_player);
@@ -84,22 +95,35 @@ impl<'a> TicTacToe<'a> {
     }
 }
 
-impl Game for TicTacToe<'_> {
+impl<'a, T, U> Game for TicTacToe<'a, T, U>
+where
+    T: crate::Player,
+    U: crate::Player,
+{
     fn play(&mut self) -> GameResult {
         // This ensures that the players get randomly assigned as the first or second
-        let first_player_idx = fastrand::usize(0..=1);
+        let first_player = fastrand::bool();
+
         let mut n: usize = 0;
 
         let winner = loop {
-            let player = self.players[(first_player_idx + n) % 2];
-
-            let action = player.play(&self.board, &self.board.available_fields);
+            let action = match n % 2 {
+                0 => match first_player {
+                    true => self.player_1.play(self, &self.board.available_fields),
+                    false => self.player_2.play(self, &self.board.available_fields),
+                },
+                1 => match first_player {
+                    true => self.player_2.play(self, &self.board.available_fields),
+                    false => self.player_1.play(self, &self.board.available_fields),
+                },
+                _ => unreachable!(),
+            };
 
             if self.act(action).is_ok() {
                 n += 1;
             };
 
-            if let State::Finished(winner) = self.state() {
+            if let State::Finished(winner) = self.is_terminal() {
                 break winner;
             }
         };
@@ -108,34 +132,30 @@ impl Game for TicTacToe<'_> {
 
         match winner {
             Some(player) => match player {
-                Player::X => {
-                    if first_player_idx == 0 {
-                        GameResult::Victory
-                    } else {
-                        GameResult::Loss
-                    }
-                }
-                Player::O => {
-                    if first_player_idx == 0 {
-                        GameResult::Loss
-                    } else {
-                        GameResult::Victory
-                    }
-                }
+                Player::X if first_player => GameResult::Victory,
+                Player::X => GameResult::Loss,
+                Player::O if !first_player => GameResult::Loss,
+                Player::O => GameResult::Victory,
             },
             None => GameResult::Draw,
         }
     }
-}
 
-pub enum MoveError {
-    NonEmptyField,
-    OutOfBound,
-}
+    fn is_terminal(&self) -> State {
+        let winner = self.winner();
 
-pub struct Board {
-    pub fields: [Option<Player>; 9],
-    pub available_fields: Vec<usize>,
+        if winner.is_some() {
+            State::Finished(winner)
+        } else if self.board.is_full() {
+            State::Finished(None)
+        } else {
+            State::OnGoing
+        }
+    }
+
+    fn state(&self) -> &Board {
+        &self.board
+    }
 }
 
 impl Board {
@@ -178,6 +198,16 @@ impl Board {
         field.replace(player);
 
         Ok(())
+    }
+}
+
+impl<'a, T, U> Display for TicTacToe<'a, T, U>
+where
+    T: crate::Player,
+    U: crate::Player,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.board)
     }
 }
 
