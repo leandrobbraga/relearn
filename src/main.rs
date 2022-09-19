@@ -3,7 +3,7 @@ mod player;
 
 use std::{fmt::Display, ops::AddAssign, thread};
 
-use game::{Game, GameResult, TicTacToe};
+use game::{Game, TicTacToe};
 use player::{Player, RandomPlayer};
 
 static GAME_COUNT: u64 = 1_000_000_000;
@@ -75,7 +75,7 @@ fn play_games(player_1: &impl Player, player_2: &impl Player, n: usize) -> Games
     let mut draws = 0;
     let mut losses = 0;
 
-    let mut game = TicTacToe::new();
+    let game = TicTacToe::new();
     let mut first_player = false;
 
     for _ in 0..n {
@@ -88,11 +88,13 @@ fn play_games(player_1: &impl Player, player_2: &impl Player, n: usize) -> Games
         };
 
         match result {
-            GameResult::Player1 if first_player => victories += 1,
-            GameResult::Player1 => losses += 1,
-            GameResult::Player2 if !first_player => victories += 1,
-            GameResult::Player2 => losses += 1,
-            GameResult::Draw => draws += 1,
+            Some(player) => match player {
+                game::Player::X if first_player => victories += 1,
+                game::Player::X => losses += 1,
+                game::Player::O if !first_player => victories += 1,
+                game::Player::O => losses += 1,
+            },
+            None => draws += 1,
         };
     }
 
