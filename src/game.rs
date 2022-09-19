@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 pub trait Game: Display {
-    fn play(&mut self) -> GameResult;
+    fn play(&mut self, player_1: &impl crate::Player, player_2: &impl crate::Player) -> GameResult;
 
     fn is_terminal(&self) -> State;
 
@@ -17,15 +17,9 @@ pub struct Board {
     pub fields: [Option<Player>; 9],
     pub available_fields: Vec<usize>,
 }
-pub struct TicTacToe<'a, T, U>
-where
-    T: crate::Player,
-    U: crate::Player,
-{
+pub struct TicTacToe {
     pub board: Board,
     current_player: Player,
-    player_1: &'a T,
-    player_2: &'a U,
 }
 
 pub enum State {
@@ -39,22 +33,16 @@ pub enum Player {
 }
 
 pub enum GameResult {
-    Victory,
+    Player1,
     Draw,
-    Loss,
+    Player2,
 }
 
-impl<'a, T, U> TicTacToe<'a, T, U>
-where
-    T: crate::Player,
-    U: crate::Player,
-{
-    pub fn new(player_1: &'a T, player_2: &'a U) -> Self {
+impl TicTacToe {
+    pub fn new() -> Self {
         TicTacToe {
             board: Board::new(),
             current_player: Player::X,
-            player_1,
-            player_2,
         }
     }
 
@@ -95,32 +83,19 @@ where
     }
 }
 
-impl<'a, T, U> Game for TicTacToe<'a, T, U>
-where
-    T: crate::Player,
-    U: crate::Player,
-{
-    fn play(&mut self) -> GameResult {
+impl Game for TicTacToe {
+    fn play(&mut self, player_1: &impl crate::Player, player_2: &impl crate::Player) -> GameResult {
         // This ensures that the players get randomly assigned as the first or second
-        let first_player = fastrand::bool();
-
-        let mut n: usize = 0;
+        let mut first_player = true;
 
         let winner = loop {
-            let action = match n % 2 {
-                0 => match first_player {
-                    true => self.player_1.play(self, &self.board.available_fields),
-                    false => self.player_2.play(self, &self.board.available_fields),
-                },
-                1 => match first_player {
-                    true => self.player_2.play(self, &self.board.available_fields),
-                    false => self.player_1.play(self, &self.board.available_fields),
-                },
-                _ => unreachable!(),
+            let action = match first_player {
+                true => player_1.play(self, &self.board.available_fields),
+                false => player_2.play(self, &self.board.available_fields),
             };
 
             if self.act(action).is_ok() {
-                n += 1;
+                first_player = !first_player;
             };
 
             if let State::Finished(winner) = self.is_terminal() {
@@ -132,10 +107,8 @@ where
 
         match winner {
             Some(player) => match player {
-                Player::X if first_player => GameResult::Victory,
-                Player::X => GameResult::Loss,
-                Player::O if !first_player => GameResult::Loss,
-                Player::O => GameResult::Victory,
+                Player::X => GameResult::Player1,
+                Player::O => GameResult::Player2,
             },
             None => GameResult::Draw,
         }
@@ -201,11 +174,7 @@ impl Board {
     }
 }
 
-impl<'a, T, U> Display for TicTacToe<'a, T, U>
-where
-    T: crate::Player,
-    U: crate::Player,
-{
+impl Display for TicTacToe {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.board)
     }

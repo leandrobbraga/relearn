@@ -3,7 +3,7 @@ mod player;
 
 use std::{fmt::Display, ops::AddAssign, thread};
 
-use game::{Game, TicTacToe};
+use game::{Game, GameResult, TicTacToe};
 use player::{Player, RandomPlayer};
 
 static GAME_COUNT: u64 = 1_000_000_000;
@@ -44,6 +44,7 @@ fn main() {
         draws: 0,
         losses: 0,
     };
+
     let available_parallelism = std::thread::available_parallelism().unwrap().get();
 
     thread::scope(|s| {
@@ -74,15 +75,24 @@ fn play_games(player_1: &impl Player, player_2: &impl Player, n: usize) -> Games
     let mut draws = 0;
     let mut losses = 0;
 
-    let mut game = TicTacToe::new(player_1, player_2);
+    let mut game = TicTacToe::new();
+    let mut first_player = false;
 
     for _ in 0..n {
-        let result = game.play();
+        // We alternate the players
+        first_player = !first_player;
+
+        let result = match first_player {
+            true => game.play(player_1, player_2),
+            false => game.play(player_2, player_1),
+        };
 
         match result {
-            game::GameResult::Victory => victories += 1,
-            game::GameResult::Draw => draws += 1,
-            game::GameResult::Loss => losses += 1,
+            GameResult::Player1 if first_player => victories += 1,
+            GameResult::Player1 => losses += 1,
+            GameResult::Player2 if !first_player => victories += 1,
+            GameResult::Player2 => losses += 1,
+            GameResult::Draw => draws += 1,
         };
     }
 
