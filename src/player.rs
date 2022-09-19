@@ -5,11 +5,11 @@ pub struct HumanPlayer;
 pub struct RandomPlayer;
 
 pub trait Player {
-    fn play(&self, board: &Board, available_moves: Vec<usize>) -> usize;
+    fn play(&self, board: &Board, available_moves: &[usize]) -> usize;
 }
 
 impl Player for HumanPlayer {
-    fn play(&self, board: &Board, available_moves: Vec<usize>) -> usize {
+    fn play(&self, board: &Board, available_moves: &[usize]) -> usize {
         println!("{board}");
         println!("Available moves: {available_moves:?}");
 
@@ -23,7 +23,7 @@ impl Player for HumanPlayer {
 }
 
 impl Player for RandomPlayer {
-    fn play(&self, _: &Board, available_moves: Vec<usize>) -> usize {
+    fn play(&self, _: &Board, available_moves: &[usize]) -> usize {
         let i = fastrand::usize(..available_moves.len());
         available_moves[i]
     }
