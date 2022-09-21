@@ -50,10 +50,6 @@ pub enum Player {
 }
 
 impl TicTacToe {
-    pub fn new() -> Self {
-        TicTacToe {}
-    }
-
     fn winner(&self, state: &Board) -> Option<Player> {
         match state.fields {
             [Some(Player::X), Some(Player::X), Some(Player::X), _, _, _, _, _, _]

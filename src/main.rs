@@ -6,7 +6,10 @@ use std::{fmt::Display, ops::AddAssign, thread};
 use game::{Game, TicTacToe};
 use player::{Player, RandomPlayer};
 
-static GAME_COUNT: u64 = 1_000_000_000;
+const GAME: TicTacToe = TicTacToe {};
+const PLAYER_1: RandomPlayer = RandomPlayer {};
+const PLAYER_2: RandomPlayer = RandomPlayer {};
+const GAME_COUNT: u64 = 1_000_000_000;
 
 struct GamesResult {
     victories: u64,
@@ -36,16 +39,16 @@ impl Display for GamesResult {
 }
 
 fn main() {
-    let player_1 = RandomPlayer {};
-    let player_2 = RandomPlayer {};
-
     let mut games_results = GamesResult {
         victories: 0,
         draws: 0,
         losses: 0,
     };
 
-    let available_parallelism = std::thread::available_parallelism().unwrap().get();
+    let available_parallelism = usize::min(
+        std::thread::available_parallelism().unwrap().get(),
+        GAME_COUNT as usize,
+    );
 
     thread::scope(|s| {
         let mut handlers = Vec::with_capacity(available_parallelism);
@@ -55,8 +58,8 @@ fn main() {
             // but it's fine for this application.
             handlers.push(s.spawn(|| {
                 play_games(
-                    &player_1,
-                    &player_2,
+                    &PLAYER_1,
+                    &PLAYER_2,
                     GAME_COUNT as usize / available_parallelism,
                 )
             }))
@@ -75,7 +78,6 @@ fn play_games(player_1: &impl Player, player_2: &impl Player, n: usize) -> Games
     let mut draws = 0;
     let mut losses = 0;
 
-    let game = TicTacToe::new();
     let mut first_player = false;
 
     for _ in 0..n {
@@ -83,8 +85,8 @@ fn play_games(player_1: &impl Player, player_2: &impl Player, n: usize) -> Games
         first_player = !first_player;
 
         let result = match first_player {
-            true => game.play(player_1, player_2),
-            false => game.play(player_2, player_1),
+            true => GAME.play(player_1, player_2),
+            false => GAME.play(player_2, player_1),
         };
 
         match result {
