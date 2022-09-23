@@ -308,4 +308,50 @@ mod test {
             Status::Finished(None)
         );
     }
+
+    #[test]
+    fn test_available_moves() {
+        let game = TicTacToe {};
+
+        assert_eq!(
+            game.available_moves(&state![
+                X X X
+                O O -
+                - - -
+            ]),
+            &vec![5, 6, 7, 8]
+        );
+        assert_eq!(
+            game.available_moves(&state![
+                X - X
+                O O -
+                - - -
+            ]),
+            &vec![1, 5, 6, 7, 8]
+        );
+        assert_eq!(
+            game.available_moves(&state![
+                O X X
+                O - -
+                O X -
+            ]),
+            &vec![4, 5, 8]
+        );
+        assert_eq!(
+            game.available_moves(&state![
+                X O X
+                O O X
+                - - -
+            ]),
+            &vec![6, 7, 8]
+        );
+        assert_eq!(
+            game.available_moves(&state![
+                X O X
+                O X X
+                O X O
+            ]),
+            &vec![]
+        );
+    }
 }
