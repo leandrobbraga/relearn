@@ -28,8 +28,8 @@ pub trait Game {
 /// state.
 #[derive(Clone, Debug, Eq)]
 pub struct Board {
-    pub fields: [Option<Player>; 9],
-    pub available_fields: Vec<usize>,
+    fields: [Option<Player>; 9],
+    available_fields: Vec<usize>,
 }
 pub struct TicTacToe {}
 
@@ -118,27 +118,7 @@ impl Game for TicTacToe {
     }
 
     fn act(&self, player: Player, position: usize, state: &mut Board) -> Result<(), MoveError> {
-        if !(0..9).contains(&position) {
-            return Err(MoveError::OutOfBound);
-        };
-
-        let field = &mut state.fields[position];
-
-        if field.is_some() {
-            return Err(MoveError::NonEmptyField);
-        }
-
-        if let Some(index) = state
-            .available_fields
-            .iter()
-            .position(|value| *value == position)
-        {
-            state.available_fields.swap_remove(index);
-        }
-
-        field.replace(player);
-
-        Ok(())
+        state.act(player, position)
     }
 
     fn available_moves<'a>(&self, state: &'a Board) -> &'a Vec<usize> {
@@ -147,7 +127,7 @@ impl Game for TicTacToe {
 }
 
 impl Board {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Board {
             fields: Default::default(),
             available_fields: vec![0, 1, 2, 3, 4, 5, 6, 7, 8],
@@ -155,7 +135,7 @@ impl Board {
     }
 
     #[allow(unused)]
-    pub fn from_array(fields: [Option<Player>; 9]) -> Self {
+    fn from_array(fields: [Option<Player>; 9]) -> Self {
         let available_fields = fields
             .iter()
             .enumerate()
@@ -166,6 +146,30 @@ impl Board {
             fields,
             available_fields,
         }
+    }
+
+    fn act(&mut self, player: Player, position: usize) -> Result<(), MoveError> {
+        if !(0..9).contains(&position) {
+            return Err(MoveError::OutOfBound);
+        };
+
+        let field = &mut self.fields[position];
+
+        if field.is_some() {
+            return Err(MoveError::NonEmptyField);
+        }
+
+        if let Some(index) = self
+            .available_fields
+            .iter()
+            .position(|value| *value == position)
+        {
+            self.available_fields.swap_remove(index);
+        }
+
+        field.replace(player);
+
+        Ok(())
     }
 }
 
@@ -214,7 +218,7 @@ impl Display for Player {
 }
 
 impl Player {
-    pub fn next_player(&self) -> Player {
+    fn next_player(&self) -> Player {
         match self {
             Player::X => Player::O,
             Player::O => Player::X,
@@ -247,11 +251,14 @@ mod test {
 
         assert!(game.act(Player::X, 3, &mut state).is_ok());
 
-        assert_eq!(state, state![
-            X O -
-            X - -
-            - - -
-        ]);
+        assert_eq!(
+            state,
+            state![
+                X O -
+                X - -
+                - - -
+            ]
+        );
 
         assert!(game.act(Player::X, 0, &mut state).is_err());
     }
