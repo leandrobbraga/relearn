@@ -293,6 +293,22 @@ mod test {
         );
         assert_eq!(
             game.status(&state![
+                O X O
+                - X -
+                O X -
+            ]),
+            Status::Finished(Some(Player::X))
+        );
+        assert_eq!(
+            game.status(&state![
+                O X X
+                O X -
+                X O -
+            ]),
+            Status::Finished(Some(Player::X))
+        );
+        assert_eq!(
+            game.status(&state![
                 X O X
                 O O X
                 - - -
@@ -336,6 +352,22 @@ mod test {
                 O X -
             ]),
             &vec![4, 5, 8]
+        );
+        assert_eq!(
+            game.available_moves(&state![
+                O X O
+                - X -
+                O X -
+            ]),
+            &vec![3, 5, 8]
+        );
+        assert_eq!(
+            game.available_moves(&state![
+                O X X
+                O X -
+                X O -
+            ]),
+            &vec![5, 8]
         );
         assert_eq!(
             game.available_moves(&state![
