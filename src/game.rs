@@ -51,6 +51,18 @@ pub enum Player {
     O,
 }
 
+/// Helper macro to make the board easier to see for humans, it enable us to define a board state
+/// like this:
+///
+/// # Example
+///
+/// ```
+///     fields![
+///         X O X
+///         - X -
+///         O O X
+///     ]
+/// ```
 macro_rules! fields {
     (O) => {Some(Player::O)};
     (X) => {Some(Player::X)};
@@ -317,7 +329,6 @@ mod test {
         ];
 
         assert!(game.act(Player::X, 3, &mut state).is_ok());
-
         assert_eq!(
             state,
             state![
@@ -326,8 +337,43 @@ mod test {
                 - - -
             ]
         );
+        assert_eq!(game.available_moves(&state), &vec![2, 8, 4, 5, 6, 7]);
 
         assert!(game.act(Player::X, 0, &mut state).is_err());
+
+        assert!(game.act(Player::O, 4, &mut state).is_ok());
+        assert_eq!(
+            state,
+            state![
+            X O -
+            X O -
+            - - -
+            ]
+        );
+        assert_eq!(game.available_moves(&state), &vec![2, 8, 7, 5, 6]);
+
+        assert!(game.act(Player::X, 8, &mut state).is_ok());
+        assert_eq!(
+            state,
+            state![
+            X O -
+            X O -
+            - - X
+            ]
+        );
+        assert_eq!(game.available_moves(&state), &vec![2, 6, 7, 5]);
+
+        assert!(game.act(Player::O, 7, &mut state).is_ok());
+        assert_eq!(
+            state,
+            state![
+            X O -
+            X O -
+            - O X
+            ]
+        );
+        assert_eq!(game.available_moves(&state), &vec![2, 6, 5]);
+        assert_eq!(game.status(&state), Status::Finished(Some(Player::O)));
     }
 
     #[test]
@@ -389,68 +435,6 @@ mod test {
                 O X O
             ]),
             Status::Finished(None)
-        );
-    }
-
-    #[test]
-    fn test_available_moves() {
-        let game = TicTacToe {};
-
-        assert_eq!(
-            game.available_moves(&state![
-                X X X
-                O O -
-                - - -
-            ]),
-            &vec![5, 6, 7, 8]
-        );
-        assert_eq!(
-            game.available_moves(&state![
-                X - X
-                O O -
-                - - -
-            ]),
-            &vec![1, 5, 6, 7, 8]
-        );
-        assert_eq!(
-            game.available_moves(&state![
-                O X X
-                O - -
-                O X -
-            ]),
-            &vec![4, 5, 8]
-        );
-        assert_eq!(
-            game.available_moves(&state![
-                O X O
-                - X -
-                O X -
-            ]),
-            &vec![3, 5, 8]
-        );
-        assert_eq!(
-            game.available_moves(&state![
-                O X X
-                O X -
-                X O -
-            ]),
-            &vec![5, 8]
-        );
-        assert_eq!(
-            game.available_moves(&state![
-                X O X
-                O O X
-                - - -
-            ]),
-            &vec![6, 7, 8]
-        );
-        assert_eq!(
-            game.available_moves(&state![
-                X O X
-                O X X
-                O X O
-            ]),
-            &vec![]
         );
     }
 }
