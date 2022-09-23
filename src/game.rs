@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::HashSet, fmt::Display};
 
 /// A basic interface for any implemented game.
 ///
@@ -11,7 +11,7 @@ use std::fmt::Display;
 pub trait Game {
     fn play(&self, player_1: &impl crate::Player, player_2: &impl crate::Player) -> Option<Player>;
 
-    fn is_terminal(&self, state: &Board) -> Status;
+    fn status(&self, state: &Board) -> Status;
 
     fn available_moves<'a>(&self, state: &'a Board) -> &'a Vec<usize>;
 
@@ -26,24 +26,26 @@ pub trait Game {
 ///
 /// We implement the `Clone` trait for it to make possible for search algorithms to branch the
 /// state.
-#[derive(Clone)]
+#[derive(Clone, Debug, Eq)]
 pub struct Board {
     pub fields: [Option<Player>; 9],
     pub available_fields: Vec<usize>,
 }
 pub struct TicTacToe {}
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum Status {
     Finished(Option<Player>),
     OnGoing,
 }
 
+#[derive(Debug)]
 pub enum MoveError {
     NonEmptyField,
     OutOfBound,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Player {
     X,
     O,
@@ -97,13 +99,13 @@ impl Game for TicTacToe {
                 continue;
             };
 
-            if let Status::Finished(winner) = self.is_terminal(&board) {
+            if let Status::Finished(winner) = self.status(&board) {
                 break winner;
             }
         }
     }
 
-    fn is_terminal(&self, state: &Board) -> Status {
+    fn status(&self, state: &Board) -> Status {
         let winner = self.winner(state);
 
         if winner.is_some() {
@@ -151,6 +153,30 @@ impl Board {
             available_fields: vec![0, 1, 2, 3, 4, 5, 6, 7, 8],
         }
     }
+
+    #[allow(unused)]
+    pub fn from_array(fields: [Option<Player>; 9]) -> Self {
+        let available_fields = fields
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, field)| if field.is_none() { Some(idx) } else { None })
+            .collect();
+
+        Self {
+            fields,
+            available_fields,
+        }
+    }
+}
+
+impl PartialEq for Board {
+    fn eq(&self, other: &Self) -> bool {
+        // We collect the available fields in a HashSet because they are not guaranteed to be
+        // ordered.
+        self.fields == other.fields
+            && self.available_fields.iter().collect::<HashSet<_>>()
+                == other.available_fields.iter().collect::<HashSet<_>>()
+    }
 }
 
 impl Display for Board {
@@ -193,5 +219,86 @@ impl Player {
             Player::X => Player::O,
             Player::O => Player::X,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    macro_rules! state {
+        (O) => {Some(Player::O)};
+        (X) => {Some(Player::X)};
+        (-) => {None};
+        ($($s:tt)+) => {
+            Board::from_array([$(state!($s)),+])
+        };
+    }
+
+    #[test]
+    fn test_act() {
+        let game = TicTacToe {};
+
+        let mut state = state![
+            X O -
+            - - -
+            - - -
+        ];
+
+        assert!(game.act(Player::X, 3, &mut state).is_ok());
+
+        assert_eq!(state, state![
+            X O -
+            X - -
+            - - -
+        ]);
+
+        assert!(game.act(Player::X, 0, &mut state).is_err());
+    }
+
+    #[test]
+    fn test_status() {
+        let game = TicTacToe {};
+
+        assert_eq!(
+            game.status(&state![
+                X X X
+                O O -
+                - - -
+            ]),
+            Status::Finished(Some(Player::X))
+        );
+        assert_eq!(
+            game.status(&state![
+                X - X
+                O O -
+                - - -
+            ]),
+            Status::OnGoing
+        );
+        assert_eq!(
+            game.status(&state![
+                O X X
+                O - -
+                O X -
+            ]),
+            Status::Finished(Some(Player::O))
+        );
+        assert_eq!(
+            game.status(&state![
+                X O X
+                O O X
+                - - -
+            ]),
+            Status::OnGoing
+        );
+        assert_eq!(
+            game.status(&state![
+                X O X
+                O X X
+                O X O
+            ]),
+            Status::Finished(None)
+        );
     }
 }
