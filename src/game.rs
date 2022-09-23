@@ -51,29 +51,99 @@ pub enum Player {
     O,
 }
 
+macro_rules! fields {
+    (O) => {Some(Player::O)};
+    (X) => {Some(Player::X)};
+    (-) => {None};
+    (_) => {_};
+    ($($s:tt)+) => {
+        [$(fields!($s)),+]
+    };
+}
+
 impl TicTacToe {
     fn winner(&self, state: &Board) -> Option<Player> {
         match state.fields {
-            [Some(Player::X), Some(Player::X), Some(Player::X), _, _, _, _, _, _]
-            | [_, _, _, Some(Player::X), Some(Player::X), Some(Player::X), _, _, _]
-            | [_, _, _, _, _, _, Some(Player::X), Some(Player::X), Some(Player::X)]
-            | [Some(Player::X), _, _, Some(Player::X), _, _, Some(Player::X), _, _]
-            | [_, Some(Player::X), _, _, Some(Player::X), _, _, Some(Player::X), _]
-            | [_, _, Some(Player::X), _, _, Some(Player::X), _, _, Some(Player::X)]
-            | [Some(Player::X), _, _, _, Some(Player::X), _, _, _, Some(Player::X)]
-            | [_, _, Some(Player::X), _, Some(Player::X), _, Some(Player::X), _, _] => {
-                Some(Player::X)
-            }
-            [Some(Player::O), Some(Player::O), Some(Player::O), _, _, _, _, _, _]
-            | [_, _, _, Some(Player::O), Some(Player::O), Some(Player::O), _, _, _]
-            | [_, _, _, _, _, _, Some(Player::O), Some(Player::O), Some(Player::O)]
-            | [Some(Player::O), _, _, Some(Player::O), _, _, Some(Player::O), _, _]
-            | [_, Some(Player::O), _, _, Some(Player::O), _, _, Some(Player::O), _]
-            | [_, _, Some(Player::O), _, _, Some(Player::O), _, _, Some(Player::O)]
-            | [Some(Player::O), _, _, _, Some(Player::O), _, _, _, Some(Player::O)]
-            | [_, _, Some(Player::O), _, Some(Player::O), _, Some(Player::O), _, _] => {
-                Some(Player::O)
-            }
+            fields![
+                X X X
+                _ _ _
+                _ _ _
+            ]
+            | fields![
+                _ _ _
+                X X X
+                _ _ _
+            ]
+            | fields![
+                _ _ _
+                _ _ _
+                X X X
+            ]
+            | fields![
+                X _ _
+                X _ _
+                X _ _
+            ]
+            | fields![
+                _ X _
+                _ X _
+                _ X _
+            ]
+            | fields![
+                _ _ X
+                _ _ X
+                _ _ X
+            ]
+            | fields![
+                X _ _
+                _ X _
+                _ _ X
+            ]
+            | fields![
+                _ _ X
+                _ X _
+                X _ _
+            ] => Some(Player::X),
+            fields![
+                O O O
+                _ _ _
+                _ _ _
+            ]
+            | fields![
+                _ _ _
+                O O O
+                _ _ _
+            ]
+            | fields![
+                _ _ _
+                _ _ _
+                O O O
+            ]
+            | fields![
+                O _ _
+                O _ _
+                O _ _
+            ]
+            | fields![
+                _ O _
+                _ O _
+                _ O _
+            ]
+            | fields![
+                _ _ O
+                _ _ O
+                _ _ O
+            ]
+            | fields![
+                O _ _
+                _ O _
+                _ _ O
+            ]
+            | fields![
+                _ _ O
+                _ O _
+                O _ _
+            ] => Some(Player::O),
             _ => None,
         }
     }
@@ -231,11 +301,8 @@ mod test {
     use super::*;
 
     macro_rules! state {
-        (O) => {Some(Player::O)};
-        (X) => {Some(Player::X)};
-        (-) => {None};
         ($($s:tt)+) => {
-            Board::from_array([$(state!($s)),+])
+            Board::from_array(fields![$($s)+])
         };
     }
 
