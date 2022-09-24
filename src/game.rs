@@ -31,6 +31,7 @@ pub struct Board {
     fields: [Option<Player>; 9],
     available_fields: Vec<usize>,
 }
+
 pub struct TicTacToe {}
 
 #[derive(Debug, PartialEq, Eq)]
@@ -167,13 +168,13 @@ impl Game for TicTacToe {
         let mut board = Board::new();
 
         loop {
-            let action = match current_player {
-                Player::X => player_1.play(self, &board),
-                Player::O => player_2.play(self, &board),
-            };
-
             let next_player = current_player.next_player();
             let player = std::mem::replace(&mut current_player, next_player);
+
+            let action = match player {
+                Player::X => player_1.play(self, &board, &player),
+                Player::O => player_2.play(self, &board, &player),
+            };
 
             if self.act(player, action, &mut board).is_err() {
                 // The same player tries again
