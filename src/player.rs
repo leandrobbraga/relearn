@@ -54,6 +54,8 @@ impl MinMaxPlayer {
     fn search(&self, game: &impl Game, state: &Board, player: &game::Player) -> usize {
         let (_, action) = self.maximize(game, state, player);
 
+        // SAFETY: Only terminal states have `None` as the action, but in terminal states the game
+        // is already finished.
         unsafe { action.unwrap_unchecked() }
     }
 
@@ -73,7 +75,12 @@ impl MinMaxPlayer {
 
         for action in game.available_moves(state) {
             let mut next_state = state.clone();
-            game.act(player.clone(), *action, &mut next_state).unwrap();
+
+            // SAFETY: we draw the actions from the `available_moves` method
+            unsafe {
+                game.act(player.clone(), *action, &mut next_state)
+                    .unwrap_unchecked()
+            };
 
             let (action_value, _) = self.minimize(game, &next_state, player);
 
@@ -82,7 +89,8 @@ impl MinMaxPlayer {
                 best_move = Some(*action);
             }
 
-            // There is no higher value than that
+            // Because we defined in the `utility` function that there is no value higher than 1, we
+            // can stop searching here, as we won't find a better move.
             if highest_value == 1 {
                 break;
             }
@@ -115,7 +123,8 @@ impl MinMaxPlayer {
                 worst_move = Some(*action);
             }
 
-            // There is no worse value than that
+            // Because we defined in the `utility` function that there is no value lower than 1, we
+            // can stop searching here, as we won't find a better opponent move.
             if lowest_value == -1 {
                 break;
             }
