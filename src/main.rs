@@ -4,12 +4,12 @@ mod player;
 use std::{fmt::Display, ops::AddAssign, thread};
 
 use game::{Game, TicTacToe};
-use player::{Player, RandomPlayer};
+use player::{MinMaxPlayer, Player, RandomPlayer};
 
 const GAME: TicTacToe = TicTacToe {};
-const PLAYER_1: RandomPlayer = RandomPlayer {};
+const PLAYER_1: MinMaxPlayer = MinMaxPlayer {};
 const PLAYER_2: RandomPlayer = RandomPlayer {};
-const GAME_COUNT: u64 = 1_000_000_000;
+const GAME_COUNT: u64 = 10_000;
 
 struct GamesResult {
     victories: u64,
@@ -29,10 +29,10 @@ impl Display for GamesResult {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Win: {}, Draw: {}, Loss: {}, Game Count: {}",
-            self.victories as f64 / GAME_COUNT as f64,
-            self.draws as f64 / GAME_COUNT as f64,
-            (GAME_COUNT - self.victories - self.draws) as f64 / GAME_COUNT as f64,
+            "Win: {:.2}%, Draw: {:.2}%, Loss: {:.2}%, Game Count: {}",
+            (self.victories as f64 / GAME_COUNT as f64) * 100.0,
+            (self.draws as f64 / GAME_COUNT as f64) * 100.0,
+            ((GAME_COUNT - self.victories - self.draws) as f64 / GAME_COUNT as f64) * 100.0,
             self.losses + self.victories + self.draws
         )
     }

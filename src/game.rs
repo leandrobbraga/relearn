@@ -301,7 +301,7 @@ impl Display for Player {
 }
 
 impl Player {
-    fn next_player(&self) -> Player {
+    pub(crate) fn next_player(&self) -> Player {
         match self {
             Player::X => Player::O,
             Player::O => Player::X,
