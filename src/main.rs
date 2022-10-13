@@ -1,15 +1,14 @@
 mod game;
-mod player;
+mod players;
 
+use game::Game;
+use players::{MinMaxPlayer, Player, RandomPlayer};
 use std::{fmt::Display, ops::AddAssign, thread};
 
-use game::{Game, TicTacToe};
-use player::{MinMaxPlayer, Player, RandomPlayer};
-
-const GAME: TicTacToe = TicTacToe {};
+const GAME: Game = Game {};
 const PLAYER_1: MinMaxPlayer = MinMaxPlayer {};
 const PLAYER_2: RandomPlayer = RandomPlayer {};
-const GAME_COUNT: u64 = 10_000;
+const GAME_COUNT: u64 = 100_000;
 
 struct GamesResult {
     victories: u64,
@@ -54,12 +53,12 @@ fn main() {
         let mut handlers = Vec::with_capacity(available_parallelism);
 
         for _ in 0..available_parallelism {
-            // NOTE: This code is not correct because it just truncates the division result,
-            // but it's fine for this application.
             handlers.push(s.spawn(|| {
                 play_games(
                     &PLAYER_1,
                     &PLAYER_2,
+                    // NOTE: This code is not correct because it just truncates the division result,
+                    // but it's fine for this application.
                     GAME_COUNT as usize / available_parallelism,
                 )
             }))

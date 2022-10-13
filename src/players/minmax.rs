@@ -1,44 +1,3 @@
-use crate::game::{self, Board, Game};
-use std::io;
-
-pub struct HumanPlayer;
-pub struct RandomPlayer;
-pub struct MinMaxPlayer;
-
-pub trait Player {
-    fn play(&self, game: &impl Game, state: &Board, player: &game::Player) -> usize;
-}
-
-impl Player for HumanPlayer {
-    fn play(&self, game: &impl Game, state: &Board, _: &game::Player) -> usize {
-        let available_moves = game.available_moves(state);
-
-        println!("{state}");
-        println!("Available moves: {available_moves:?}");
-
-        let mut buf = String::new();
-        io::stdin().read_line(&mut buf).unwrap();
-
-        let action: usize = buf.trim().parse().unwrap();
-
-        action
-    }
-}
-
-impl Player for RandomPlayer {
-    fn play(&self, game: &impl Game, state: &Board, _: &game::Player) -> usize {
-        let available_moves = game.available_moves(state);
-        let i = fastrand::usize(..available_moves.len());
-        available_moves[i]
-    }
-}
-
-impl Player for MinMaxPlayer {
-    fn play(&self, game: &impl Game, state: &Board, player: &game::Player) -> usize {
-        self.search(game, state, player)
-    }
-}
-
 /// The `Min-Max` algorithm is a naive solution for two-player, zero-sum, turn-taking games.
 ///
 /// The algorithm works by exploring the state space graph alternating between maximization
@@ -50,8 +9,20 @@ impl Player for MinMaxPlayer {
 ///
 /// NOTE: This algorithm was customized to stop evaluating upon reaching the first terminal state
 /// with victory as it's not possible to have any higher score.
+use crate::game::{self, Game, State};
+
+use super::Player;
+
+pub struct MinMaxPlayer;
+
+impl Player for MinMaxPlayer {
+    fn play(&self, game: &Game, state: &State, player: &game::Player) -> usize {
+        self.search(game, state, player)
+    }
+}
+
 impl MinMaxPlayer {
-    fn search(&self, game: &impl Game, state: &Board, player: &game::Player) -> usize {
+    fn search(&self, game: &Game, state: &State, player: &game::Player) -> usize {
         let (_, action) = self.maximize(game, state, player);
 
         // SAFETY: Only terminal states have `None` as the action, but in terminal states the game
@@ -59,12 +30,7 @@ impl MinMaxPlayer {
         unsafe { action.unwrap_unchecked() }
     }
 
-    fn maximize(
-        &self,
-        game: &impl Game,
-        state: &Board,
-        player: &game::Player,
-    ) -> (i64, Option<usize>) {
+    fn maximize(&self, game: &Game, state: &State, player: &game::Player) -> (i64, Option<usize>) {
         if let game::Status::Finished(maybe_winner) = game.status(state) {
             return (self.utility(maybe_winner, player), None);
         }
@@ -99,12 +65,7 @@ impl MinMaxPlayer {
         (highest_value, best_move)
     }
 
-    fn minimize(
-        &self,
-        game: &impl Game,
-        state: &Board,
-        player: &game::Player,
-    ) -> (i64, Option<usize>) {
+    fn minimize(&self, game: &Game, state: &State, player: &game::Player) -> (i64, Option<usize>) {
         if let game::Status::Finished(maybe_winner) = game.status(state) {
             return (self.utility(maybe_winner, player), None);
         }
