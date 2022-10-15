@@ -1,14 +1,29 @@
 mod game;
 mod players;
 
+use clap::{Parser, ValueEnum};
 use game::Game;
-use players::{MinMaxPlayer, Player, RandomPlayer};
-use std::{fmt::Display, ops::AddAssign, thread};
+use players::{HumanPlayer, MinMaxPlayer, Player, RandomPlayer};
+use std::{fmt::Display, ops::AddAssign, sync::Arc, thread};
 
 const GAME: Game = Game {};
-const PLAYER_1: MinMaxPlayer = MinMaxPlayer {};
-const PLAYER_2: RandomPlayer = RandomPlayer {};
-const GAME_COUNT: u64 = 100_000;
+
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Arguments {
+    #[arg(value_enum)]
+    player_1: PlayerKind,
+    #[arg(value_enum)]
+    player_2: PlayerKind,
+    game_cont: u64,
+}
+
+#[derive(Clone, ValueEnum)]
+enum PlayerKind {
+    Human,
+    Random,
+    MinMax,
+}
 
 struct GamesResult {
     victories: u64,
@@ -16,28 +31,12 @@ struct GamesResult {
     losses: u64,
 }
 
-impl AddAssign for GamesResult {
-    fn add_assign(&mut self, rhs: Self) {
-        self.victories += rhs.victories;
-        self.draws += rhs.draws;
-        self.losses += rhs.losses;
-    }
-}
-
-impl Display for GamesResult {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Win: {:.2}%, Draw: {:.2}%, Loss: {:.2}%, Game Count: {}",
-            (self.victories as f64 / GAME_COUNT as f64) * 100.0,
-            (self.draws as f64 / GAME_COUNT as f64) * 100.0,
-            ((GAME_COUNT - self.victories - self.draws) as f64 / GAME_COUNT as f64) * 100.0,
-            self.losses + self.victories + self.draws
-        )
-    }
-}
-
 fn main() {
+    let args = Arguments::parse();
+
+    let player_1 = args.player_1.get_player();
+    let player_2 = args.player_2.get_player();
+
     let mut games_results = GamesResult {
         victories: 0,
         draws: 0,
@@ -46,7 +45,7 @@ fn main() {
 
     let available_parallelism = usize::min(
         std::thread::available_parallelism().unwrap().get(),
-        GAME_COUNT as usize,
+        args.game_cont as usize,
     );
 
     thread::scope(|s| {
@@ -55,11 +54,11 @@ fn main() {
         for _ in 0..available_parallelism {
             handlers.push(s.spawn(|| {
                 play_games(
-                    &PLAYER_1,
-                    &PLAYER_2,
+                    &*player_1.clone(),
+                    &*player_2.clone(),
                     // NOTE: This code is not correct because it just truncates the division result,
                     // but it's fine for this application.
-                    GAME_COUNT as usize / available_parallelism,
+                    args.game_cont as usize / available_parallelism,
                 )
             }))
         }
@@ -72,7 +71,7 @@ fn main() {
     print!("{games_results}")
 }
 
-fn play_games(player_1: &impl Player, player_2: &impl Player, n: usize) -> GamesResult {
+fn play_games(player_1: &dyn Player, player_2: &dyn Player, n: usize) -> GamesResult {
     let mut victories = 0;
     let mut draws = 0;
     let mut losses = 0;
@@ -103,5 +102,38 @@ fn play_games(player_1: &impl Player, player_2: &impl Player, n: usize) -> Games
         victories,
         draws,
         losses,
+    }
+}
+
+impl PlayerKind {
+    fn get_player(&self) -> Arc<dyn players::Player + Send + Sync> {
+        match self {
+            PlayerKind::Human => Arc::new(HumanPlayer {}),
+            PlayerKind::Random => Arc::new(RandomPlayer {}),
+            PlayerKind::MinMax => Arc::new(MinMaxPlayer),
+        }
+    }
+}
+
+impl AddAssign for GamesResult {
+    fn add_assign(&mut self, rhs: Self) {
+        self.victories += rhs.victories;
+        self.draws += rhs.draws;
+        self.losses += rhs.losses;
+    }
+}
+
+impl Display for GamesResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let game_count = self.victories + self.draws + self.losses;
+
+        write!(
+            f,
+            "Win: {:.2}%, Draw: {:.2}%, Loss: {:.2}%, Game Count: {}",
+            (self.victories as f64 / game_count as f64) * 100.0,
+            (self.draws as f64 / game_count as f64) * 100.0,
+            ((game_count - self.victories - self.draws) as f64 / game_count as f64) * 100.0,
+            game_count
+        )
     }
 }

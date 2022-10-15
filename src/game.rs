@@ -52,8 +52,8 @@ pub enum Player {
 impl Game {
     pub(crate) fn play(
         &self,
-        player_1: &impl crate::Player,
-        player_2: &impl crate::Player,
+        player_1: &dyn crate::Player,
+        player_2: &dyn crate::Player,
     ) -> Option<Player> {
         let mut current_player = Player::X;
         let mut board = State::new();
