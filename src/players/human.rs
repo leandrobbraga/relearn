@@ -18,4 +18,6 @@ impl Player for HumanPlayer {
 
         action
     }
+
+    fn learn(&mut self, _: &Game) {}
 }

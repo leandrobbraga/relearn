@@ -10,4 +10,6 @@ impl Player for RandomPlayer {
         let i = fastrand::usize(..available_moves.len());
         available_moves[i]
     }
+
+    fn learn(&mut self, _: &Game) {}
 }

@@ -42,21 +42,24 @@ fn main() {
             player_1,
             player_2,
             game_count,
-        } => commands::play(
-            GAME,
-            player_1.get_player(),
-            player_2.get_player(),
-            game_count,
-        ),
+        } => {
+            let mut player_1 = player_1.create_player();
+            let mut player_2 = player_2.create_player();
+
+            player_1.learn(&GAME);
+            player_2.learn(&GAME);
+
+            commands::play(GAME, Arc::from(player_1), Arc::from(player_2), game_count)
+        }
     }
 }
 
 impl PlayerKind {
-    fn get_player(&self) -> Arc<dyn players::Player + Send + Sync> {
+    fn create_player(&self) -> Box<dyn players::Player + Send + Sync> {
         match self {
-            PlayerKind::Human => Arc::new(HumanPlayer {}),
-            PlayerKind::Random => Arc::new(RandomPlayer {}),
-            PlayerKind::MinMax => Arc::new(MinMaxPlayer),
+            PlayerKind::Human => Box::new(HumanPlayer {}),
+            PlayerKind::Random => Box::new(RandomPlayer {}),
+            PlayerKind::MinMax => Box::new(MinMaxPlayer::new()),
         }
     }
 }

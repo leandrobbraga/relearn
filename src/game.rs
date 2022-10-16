@@ -1,3 +1,4 @@
+use std::hash::Hash;
 use std::{collections::HashSet, fmt::Display};
 
 /// Helper macro to make the board easier to see for humans, it enable us to define a board state
@@ -43,7 +44,7 @@ pub enum MoveError {
     OutOfBound,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Player {
     X,
     O,
@@ -249,6 +250,13 @@ impl PartialEq for State {
         self.fields == other.fields
             && self.available_fields.iter().collect::<HashSet<_>>()
                 == other.available_fields.iter().collect::<HashSet<_>>()
+    }
+}
+
+impl Hash for State {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        // If the implementation is correct we just care about the fields to make the State unique
+        self.fields.hash(state);
     }
 }
 

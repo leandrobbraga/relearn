@@ -1,4 +1,3 @@
-#![allow(unused_imports)]
 mod human;
 mod minmax;
 mod random;
@@ -11,4 +10,5 @@ use crate::game::{self, Game, State};
 
 pub trait Player {
     fn play(&self, game: &Game, state: &State, player: &game::Player) -> usize;
+    fn learn(&mut self, game: &Game);
 }
