@@ -5,7 +5,7 @@ use std::io;
 pub struct HumanPlayer;
 
 impl Player for HumanPlayer {
-    fn play(&self, game: &Game, state: &State, _: &game::Player) -> usize {
+    fn play(&self, game: &Game, state: &State, _: game::Player) -> usize {
         let available_moves = game.available_moves(state);
 
         println!("{state}");

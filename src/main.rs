@@ -55,7 +55,7 @@ fn main() {
 }
 
 impl PlayerKind {
-    fn create_player(&self) -> Box<dyn players::Player + Send + Sync> {
+    fn create_player(&self) -> Box<dyn players::Player + Sync + Send> {
         match self {
             PlayerKind::Human => Box::new(HumanPlayer {}),
             PlayerKind::Random => Box::new(RandomPlayer {}),

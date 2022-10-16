@@ -44,7 +44,7 @@ pub enum MoveError {
     OutOfBound,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Player {
     X,
     O,
@@ -64,8 +64,8 @@ impl Game {
             let player = std::mem::replace(&mut current_player, next_player);
 
             let action = match player {
-                Player::X => player_1.play(self, &board, &player),
-                Player::O => player_2.play(self, &board, &player),
+                Player::X => player_1.play(self, &board, player),
+                Player::O => player_2.play(self, &board, player),
             };
 
             if self.act(player, action, &mut board).is_err() {

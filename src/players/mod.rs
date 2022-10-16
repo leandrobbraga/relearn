@@ -8,7 +8,7 @@ pub(crate) use random::RandomPlayer;
 
 use crate::game::{self, Game, State};
 
-pub trait Player {
-    fn play(&self, game: &Game, state: &State, player: &game::Player) -> usize;
+pub trait Player: Sync + Send {
+    fn play(&self, game: &Game, state: &State, player: game::Player) -> usize;
     fn learn(&mut self, game: &Game);
 }

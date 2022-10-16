@@ -20,7 +20,7 @@ pub struct MinMaxPlayer {
 }
 
 impl Player for MinMaxPlayer {
-    fn play(&self, _: &Game, state: &State, _: &game::Player) -> usize {
+    fn play(&self, _: &Game, state: &State, _: game::Player) -> usize {
         // SAFETY: We always train the player before playing
         unsafe { *self.knowledge.get(state).unwrap_unchecked() }
     }
@@ -29,7 +29,7 @@ impl Player for MinMaxPlayer {
         let state = State::new();
         let player = game::Player::X;
 
-        self.maximize(game, state, &player);
+        self.maximize(game, state, player);
     }
 }
 
@@ -44,7 +44,7 @@ impl MinMaxPlayer {
         &mut self,
         game: &Game,
         state: State,
-        player: &game::Player,
+        player: game::Player,
     ) -> (i64, Option<usize>) {
         if let game::Status::Finished(maybe_winner) = game.status(&state) {
             return (self.utility(maybe_winner, player), None);
@@ -59,7 +59,7 @@ impl MinMaxPlayer {
 
             // SAFETY: we draw the actions from the `available_moves` method
             unsafe {
-                game.act(player.clone(), *action, &mut next_state)
+                game.act(player, *action, &mut next_state)
                     .unwrap_unchecked()
             };
 
@@ -83,7 +83,7 @@ impl MinMaxPlayer {
         &mut self,
         game: &Game,
         state: State,
-        player: &game::Player,
+        player: game::Player,
     ) -> (i64, Option<usize>) {
         if let game::Status::Finished(maybe_winner) = game.status(&state) {
             return (self.utility(maybe_winner, player), None);
@@ -115,10 +115,10 @@ impl MinMaxPlayer {
         (lowest_value, worst_move)
     }
 
-    fn utility(&self, maybe_winner: Option<game::Player>, player: &game::Player) -> i64 {
+    fn utility(&self, maybe_winner: Option<game::Player>, player: game::Player) -> i64 {
         match maybe_winner {
             Some(winner) => {
-                if winner == *player {
+                if winner == player {
                     1
                 } else {
                     -1
