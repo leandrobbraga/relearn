@@ -1,5 +1,5 @@
+use std::fmt::Display;
 use std::hash::Hash;
-use std::{collections::HashSet, fmt::Display};
 
 /// Helper macro to make the board easier to see for humans, it enable us to define a board state
 /// like this:
@@ -248,8 +248,6 @@ impl PartialEq for State {
         // We collect the available fields in a HashSet because they are not guaranteed to be
         // ordered.
         self.fields == other.fields
-            && self.available_fields.iter().collect::<HashSet<_>>()
-                == other.available_fields.iter().collect::<HashSet<_>>()
     }
 }
 

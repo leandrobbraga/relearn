@@ -9,10 +9,7 @@ learning.
 
 ## Usage
 
-Currently there is no CLI implementation, so the parameters are controlled in some `const` in the
-top of the `/src/main.rs` file.
-
 ```shell
-$ cargo run -r
-Win: 84.40%, Draw: 14.00%, Loss: 1.60%, Game Count: 984
+$ cargo run -r play min-max random 100
+Win: 89.58%, Draw: 10.42%, Loss: 0.00%, Game Count: 96
 ```
