@@ -1,7 +1,10 @@
+use serde::{Deserialize, Serialize};
+
 use super::Player;
 use crate::game::{self, Game, State};
 use std::io;
 
+#[derive(Serialize, Deserialize)]
 pub struct HumanPlayer;
 
 impl Player for HumanPlayer {

@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use serde::{Deserialize, Serialize};
+
 /// The `Min-Max` algorithm is a naive solution for two-player, zero-sum, turn-taking games.
 ///
 /// The algorithm works by exploring the state space graph alternating between maximization
@@ -15,6 +17,7 @@ use crate::game::{self, Game, State};
 
 use super::Player;
 
+#[derive(Serialize, Deserialize)]
 pub struct MinMaxPlayer {
     knowledge: HashMap<State, usize>,
 }

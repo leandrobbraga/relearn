@@ -1,6 +1,8 @@
 use std::fmt::Display;
 use std::hash::Hash;
 
+use serde::{Deserialize, Serialize};
+
 /// Helper macro to make the board easier to see for humans, it enable us to define a board state
 /// like this:
 ///
@@ -26,7 +28,7 @@ macro_rules! fields {
 /// A basic game implementation (Tic-Tac-Toe).
 pub struct Game;
 
-#[derive(Clone, Debug, Eq)]
+#[derive(Clone, Debug, Eq, Serialize, Deserialize)]
 pub struct State {
     fields: [Option<Player>; 9],
     available_fields: Vec<usize>,
@@ -44,7 +46,7 @@ pub enum MoveError {
     OutOfBound,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Player {
     X,
     O,

@@ -1,7 +1,10 @@
+use serde::{Deserialize, Serialize};
+
 use crate::game::{self, Game, State};
 
 use super::Player;
 
+#[derive(Serialize, Deserialize)]
 pub struct RandomPlayer;
 
 impl Player for RandomPlayer {
