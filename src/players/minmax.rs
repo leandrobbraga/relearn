@@ -45,6 +45,12 @@ impl Player for MinMaxPlayer {
         let mut file =
             File::create(FILE).map_err(|err| ReLearnError::SaveAgentError(err.to_string()))?;
 
+        // We use the `rmp_serde` instead of `serde_json` for two reasons:
+        // 1. It's a compact format, reducing the learned agent size in disk
+        // 2. `serde_json` has a limitation with HashMap<K,V>. The default
+        //    serialization/deserialization implementation expects `K` to be `String`, which is not
+        //    the case. It's possible to implement a customized serialization/deserialization
+        //    function, but it was too much of a hassle.
         self.serialize(&mut Serializer::new(&mut file))
             .map_err(|err| ReLearnError::SaveAgentError(err.to_string()))
     }

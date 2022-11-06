@@ -9,6 +9,10 @@ learning.
 
 ## Usage
 
+The process was split in two steps: learning and playing. That was done because in most agents the
+process of learning is orders of magnitude slower than the process of playing. This way it's
+possible to cache learned agents to avoid paying the learning cost again.
+
 ### Learning
 
 Some agents need to learn ahead of time (e.g., min-max). To do that, run
