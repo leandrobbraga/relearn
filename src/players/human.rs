@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 
 use super::Player;
-use crate::game::{self, Game, State};
+use crate::{
+    game::{self, Game, State},
+    ReLearnError,
+};
 use std::io;
 
 #[derive(Serialize, Deserialize)]
@@ -23,4 +26,8 @@ impl Player for HumanPlayer {
     }
 
     fn learn(&mut self, _: &Game) {}
+
+    fn save(&self) -> Result<(), ReLearnError> {
+        Ok(())
+    }
 }

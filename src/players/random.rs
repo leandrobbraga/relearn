@@ -15,4 +15,8 @@ impl Player for RandomPlayer {
     }
 
     fn learn(&mut self, _: &Game) {}
+
+    fn save(&self) -> Result<(), super::ReLearnError> {
+        Ok(())
+    }
 }

@@ -1,5 +1,6 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fs::File};
 
+use rmp_serde::Serializer;
 use serde::{Deserialize, Serialize};
 
 /// The `Min-Max` algorithm is a naive solution for two-player, zero-sum, turn-taking games.
@@ -13,9 +14,14 @@ use serde::{Deserialize, Serialize};
 ///
 /// NOTE: This algorithm was customized to stop evaluating upon reaching the first terminal state
 /// with victory as it's not possible to have any higher score.
-use crate::game::{self, Game, State};
+use crate::{
+    game::{self, Game, State},
+    ReLearnError,
+};
 
 use super::Player;
+
+const FILE: &str = "minmax.bin";
 
 #[derive(Serialize, Deserialize)]
 pub struct MinMaxPlayer {
@@ -33,6 +39,14 @@ impl Player for MinMaxPlayer {
         let player = game::Player::X;
 
         self.maximize(game, state, player);
+    }
+
+    fn save(&self) -> Result<(), ReLearnError> {
+        let mut file =
+            File::create(FILE).map_err(|err| ReLearnError::SaveAgentError(err.to_string()))?;
+
+        self.serialize(&mut Serializer::new(&mut file))
+            .map_err(|err| ReLearnError::SaveAgentError(err.to_string()))
     }
 }
 
