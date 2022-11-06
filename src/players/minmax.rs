@@ -21,7 +21,7 @@ use crate::{
 
 use super::Player;
 
-const FILE: &str = "minmax.bin";
+pub const FILE: &str = "minmax.bin";
 
 #[derive(Serialize, Deserialize)]
 pub struct MinMaxPlayer {

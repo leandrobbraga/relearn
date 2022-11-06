@@ -4,7 +4,7 @@ mod players;
 
 use clap::{Parser, Subcommand, ValueEnum};
 use game::Game;
-use players::{HumanPlayer, MinMaxPlayer, Player, RandomPlayer};
+use players::{minmax, HumanPlayer, MinMaxPlayer, Player, RandomPlayer};
 use std::{fmt, fs::File, sync::Arc};
 
 const GAME: Game = Game {};
@@ -69,7 +69,7 @@ impl PlayerKind {
         match self {
             PlayerKind::Human | PlayerKind::Random => Ok(self.create_player()),
             PlayerKind::MinMax => {
-                let file = File::open("minmax.bin")
+                let file = File::open(minmax::FILE)
                     .map_err(|err| ReLearnError::LoadAgentError(err.to_string()))?;
 
                 let mut deserializer = rmp_serde::Deserializer::new(file);

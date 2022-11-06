@@ -1,5 +1,5 @@
 mod human;
-mod minmax;
+pub mod minmax;
 mod random;
 
 pub(crate) use human::HumanPlayer;
