@@ -11,8 +11,8 @@ use std::io;
 pub struct HumanPlayer;
 
 impl Player for HumanPlayer {
-    fn play(&self, game: &Game, state: &State, _: game::Player) -> u8 {
-        let available_moves = game.available_moves(state);
+    fn play(&self, state: &State, _: game::Player) -> u8 {
+        let available_moves = Game::available_moves(state);
 
         println!("{state}");
         println!("Available moves: {available_moves:?}");

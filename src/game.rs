@@ -54,7 +54,6 @@ pub enum Player {
 
 impl Game {
     pub(crate) fn play(
-        &self,
         player_1: &dyn crate::Player,
         player_2: &dyn crate::Player,
     ) -> Option<Player> {
@@ -66,24 +65,24 @@ impl Game {
             let player = std::mem::replace(&mut current_player, next_player);
 
             let action = match player {
-                Player::X => player_1.play(self, &board, player),
-                Player::O => player_2.play(self, &board, player),
+                Player::X => player_1.play(&board, player),
+                Player::O => player_2.play(&board, player),
             };
 
-            if self.act(player, action, &mut board).is_err() {
+            if Game::act(player, action, &mut board).is_err() {
                 // The same player tries again
                 current_player = current_player.next_player();
                 continue;
             };
 
-            if let Status::Finished(winner) = self.status(&board) {
+            if let Status::Finished(winner) = Game::status(&board) {
                 break winner;
             }
         }
     }
 
-    pub(crate) fn status(&self, state: &State) -> Status {
-        let winner = self.winner(state);
+    pub(crate) fn status(state: &State) -> Status {
+        let winner = Game::winner(state);
 
         if winner.is_some() {
             Status::Finished(winner)
@@ -94,7 +93,7 @@ impl Game {
         }
     }
 
-    pub(crate) fn available_moves<'a>(&self, state: &'a State) -> &'a Vec<u8> {
+    pub(crate) fn available_moves(state: &State) -> &Vec<u8> {
         &state.available_fields
     }
 
@@ -102,16 +101,11 @@ impl Game {
     ///
     /// For now we'll keep this method as fallible for debugging purpose, we might implement a
     /// `unchecked_act` in the future for optimization purpose.
-    pub(crate) fn act(
-        &self,
-        player: Player,
-        position: u8,
-        state: &mut State,
-    ) -> Result<(), MoveError> {
+    pub(crate) fn act(player: Player, position: u8, state: &mut State) -> Result<(), MoveError> {
         state.act(player, position)
     }
 
-    fn winner(&self, state: &State) -> Option<Player> {
+    fn winner(state: &State) -> Option<Player> {
         match state.fields {
             fields![
                 X X X
@@ -270,7 +264,7 @@ impl Display for State {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for (i, field) in self.fields.iter().enumerate() {
             match field {
-                Some(player) => write!(f, " {} ", player)?,
+                Some(player) => write!(f, " {player} ")?,
                 None => write!(f, "   ")?,
             };
 
@@ -292,7 +286,7 @@ impl Display for State {
 }
 
 impl Player {
-    pub(crate) fn next_player(&self) -> Player {
+    pub(crate) fn next_player(self) -> Player {
         match self {
             Player::X => Player::O,
             Player::O => Player::X,
@@ -321,15 +315,13 @@ mod test {
 
     #[test]
     fn test_act() {
-        let game = Game {};
-
         let mut state = state![
             X O -
             - - -
             - - -
         ];
 
-        assert!(game.act(Player::X, 3, &mut state).is_ok());
+        assert!(Game::act(Player::X, 3, &mut state).is_ok());
         assert_eq!(
             state,
             state![
@@ -338,11 +330,11 @@ mod test {
                 - - -
             ]
         );
-        assert_eq!(game.available_moves(&state), &vec![2, 8, 4, 5, 6, 7]);
+        assert_eq!(Game::available_moves(&state), &vec![2, 8, 4, 5, 6, 7]);
 
-        assert!(game.act(Player::X, 0, &mut state).is_err());
+        assert!(Game::act(Player::X, 0, &mut state).is_err());
 
-        assert!(game.act(Player::O, 4, &mut state).is_ok());
+        assert!(Game::act(Player::O, 4, &mut state).is_ok());
         assert_eq!(
             state,
             state![
@@ -351,9 +343,9 @@ mod test {
             - - -
             ]
         );
-        assert_eq!(game.available_moves(&state), &vec![2, 8, 7, 5, 6]);
+        assert_eq!(Game::available_moves(&state), &vec![2, 8, 7, 5, 6]);
 
-        assert!(game.act(Player::X, 8, &mut state).is_ok());
+        assert!(Game::act(Player::X, 8, &mut state).is_ok());
         assert_eq!(
             state,
             state![
@@ -362,9 +354,9 @@ mod test {
             - - X
             ]
         );
-        assert_eq!(game.available_moves(&state), &vec![2, 6, 7, 5]);
+        assert_eq!(Game::available_moves(&state), &vec![2, 6, 7, 5]);
 
-        assert!(game.act(Player::O, 7, &mut state).is_ok());
+        assert!(Game::act(Player::O, 7, &mut state).is_ok());
         assert_eq!(
             state,
             state![
@@ -373,16 +365,14 @@ mod test {
             - O X
             ]
         );
-        assert_eq!(game.available_moves(&state), &vec![2, 6, 5]);
-        assert_eq!(game.status(&state), Status::Finished(Some(Player::O)));
+        assert_eq!(Game::available_moves(&state), &vec![2, 6, 5]);
+        assert_eq!(Game::status(&state), Status::Finished(Some(Player::O)));
     }
 
     #[test]
     fn test_status() {
-        let game = Game {};
-
         assert_eq!(
-            game.status(&state![
+            Game::status(&state![
                 X X X
                 O O -
                 - - -
@@ -390,7 +380,7 @@ mod test {
             Status::Finished(Some(Player::X))
         );
         assert_eq!(
-            game.status(&state![
+            Game::status(&state![
                 X - X
                 O O -
                 - - -
@@ -398,7 +388,7 @@ mod test {
             Status::OnGoing
         );
         assert_eq!(
-            game.status(&state![
+            Game::status(&state![
                 O X X
                 O - -
                 O X -
@@ -406,7 +396,7 @@ mod test {
             Status::Finished(Some(Player::O))
         );
         assert_eq!(
-            game.status(&state![
+            Game::status(&state![
                 O X O
                 - X -
                 O X -
@@ -414,7 +404,7 @@ mod test {
             Status::Finished(Some(Player::X))
         );
         assert_eq!(
-            game.status(&state![
+            Game::status(&state![
                 O X X
                 O X -
                 X O -
@@ -422,7 +412,7 @@ mod test {
             Status::Finished(Some(Player::X))
         );
         assert_eq!(
-            game.status(&state![
+            Game::status(&state![
                 X O X
                 O O X
                 - - -
@@ -430,7 +420,7 @@ mod test {
             Status::OnGoing
         );
         assert_eq!(
-            game.status(&state![
+            Game::status(&state![
                 X O X
                 O X X
                 O X O

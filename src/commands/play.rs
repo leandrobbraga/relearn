@@ -1,4 +1,4 @@
-use std::{fmt::Display, ops::AddAssign, sync::Arc, thread};
+use std::{fmt::Display, ops::AddAssign, thread};
 
 use crate::{
     game::{self, Game},
@@ -11,12 +11,7 @@ struct GamesResult {
     losses: u32,
 }
 
-pub(crate) fn play(
-    game: Game,
-    player_1: Arc<dyn Player + Send + Sync>,
-    player_2: Arc<dyn Player + Send + Sync>,
-    game_count: u32,
-) {
+pub(crate) fn play(player_1: &dyn Player, player_2: &dyn Player, game_count: u32) {
     let mut games_results = GamesResult {
         victories: 0,
         draws: 0,
@@ -34,14 +29,13 @@ pub(crate) fn play(
         for _ in 0..available_parallelism {
             handlers.push(s.spawn(|| {
                 play_games(
-                    &game,
-                    &*player_1.clone(),
-                    &*player_2.clone(),
+                    player_1,
+                    player_2,
                     // NOTE: This code is not correct because it just truncates the division result,
                     // but it's fine for this application.
                     game_count as usize / available_parallelism,
                 )
-            }))
+            }));
         }
 
         for handler in handlers {
@@ -49,10 +43,10 @@ pub(crate) fn play(
         }
     });
 
-    print!("{games_results}")
+    print!("{games_results}");
 }
 
-fn play_games(game: &Game, player_1: &dyn Player, player_2: &dyn Player, n: usize) -> GamesResult {
+fn play_games(player_1: &dyn Player, player_2: &dyn Player, n: usize) -> GamesResult {
     let mut victories = 0;
     let mut draws = 0;
     let mut losses = 0;
@@ -63,17 +57,17 @@ fn play_games(game: &Game, player_1: &dyn Player, player_2: &dyn Player, n: usiz
         // We alternate the players
         first_player = !first_player;
 
-        let result = match first_player {
-            true => game.play(player_1, player_2),
-            false => game.play(player_2, player_1),
+        let result = if first_player {
+            Game::play(player_1, player_2)
+        } else {
+            Game::play(player_2, player_1)
         };
 
         match result {
             Some(player) => match player {
                 game::Player::X if first_player => victories += 1,
-                game::Player::X => losses += 1,
                 game::Player::O if !first_player => victories += 1,
-                game::Player::O => losses += 1,
+                game::Player::X | game::Player::O => losses += 1,
             },
             None => draws += 1,
         };

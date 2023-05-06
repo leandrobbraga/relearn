@@ -5,7 +5,7 @@ mod players;
 use clap::{Parser, Subcommand, ValueEnum};
 use game::Game;
 use players::{minmax, HumanPlayer, MinMaxPlayer, Player, RandomPlayer};
-use std::{fmt, fs::File, sync::Arc};
+use std::{fmt, fs::File};
 
 const GAME: Game = Game {};
 
@@ -46,13 +46,10 @@ fn main() -> Result<(), ReLearnError> {
             player_2,
             game_count,
         } => {
-            let mut player_1 = player_1.load_player()?;
-            let mut player_2 = player_2.load_player()?;
+            let player_1 = player_1.load_player()?;
+            let player_2 = player_2.load_player()?;
 
-            player_1.learn(&GAME);
-            player_2.learn(&GAME);
-
-            commands::play(GAME, Arc::from(player_1), Arc::from(player_2), game_count);
+            commands::play(player_1.as_ref(), player_2.as_ref(), game_count);
         }
         Commands::Learn { player } => {
             let mut player = player.create_player();
@@ -65,12 +62,12 @@ fn main() -> Result<(), ReLearnError> {
 }
 
 impl PlayerKind {
-    fn load_player(&self) -> Result<Box<dyn players::Player + Sync + Send>, ReLearnError> {
+    fn load_player(&self) -> Result<Box<dyn players::Player>, ReLearnError> {
         match self {
             PlayerKind::Human | PlayerKind::Random => Ok(self.create_player()),
             PlayerKind::MinMax => {
-                let file = File::open(minmax::FILE)
-                    .map_err(|err| ReLearnError::LoadAgentError(err.to_string()))?;
+                let Ok(file) = File::open(minmax::FILE) else {
+                    return Err(ReLearnError::LoadAgentError(format!("Failed to load selected agent, did you run 'cargo run -r -- learn min-max' first?")))};
 
                 let mut deserializer = rmp_serde::Deserializer::new(file);
                 let player: MinMaxPlayer = serde::Deserialize::deserialize(&mut deserializer)

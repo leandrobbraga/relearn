@@ -29,7 +29,7 @@ pub struct MinMaxPlayer {
 }
 
 impl Player for MinMaxPlayer {
-    fn play(&self, _: &Game, state: &State, _: game::Player) -> u8 {
+    fn play(&self, state: &State, _: game::Player) -> u8 {
         // SAFETY: We always train the player before playing
         unsafe { *self.knowledge.get(state).unwrap_unchecked() }
     }
@@ -64,19 +64,19 @@ impl MinMaxPlayer {
     }
 
     fn maximize(&mut self, game: &Game, state: State, player: game::Player) -> (i64, Option<u8>) {
-        if let game::Status::Finished(maybe_winner) = game.status(&state) {
-            return (self.utility(maybe_winner, player), None);
+        if let game::Status::Finished(maybe_winner) = Game::status(&state) {
+            return (Self::utility(maybe_winner, player), None);
         }
 
         // We use a value that any move will surpass, just to initialize the variable
         let mut highest_value = -10;
         let mut best_move: Option<_> = None;
 
-        for &action in game.available_moves(&state) {
+        for &action in Game::available_moves(&state) {
             let mut next_state = state.clone();
 
             // SAFETY: we draw the actions from the `available_moves` method
-            unsafe { game.act(player, action, &mut next_state).unwrap_unchecked() };
+            unsafe { Game::act(player, action, &mut next_state).unwrap_unchecked() };
 
             let (action_value, _) = self.minimize(game, next_state, player);
 
@@ -95,19 +95,18 @@ impl MinMaxPlayer {
     }
 
     fn minimize(&mut self, game: &Game, state: State, player: game::Player) -> (i64, Option<u8>) {
-        if let game::Status::Finished(maybe_winner) = game.status(&state) {
-            return (self.utility(maybe_winner, player), None);
+        if let game::Status::Finished(maybe_winner) = Game::status(&state) {
+            return (Self::utility(maybe_winner, player), None);
         }
 
         let mut lowest_value = 10;
         let mut worst_move: Option<_> = None;
 
-        for &action in game.available_moves(&state) {
+        for &action in Game::available_moves(&state) {
             let mut next_state = state.clone();
             // SAFETY: we draw the actions from the `available_moves` method
             unsafe {
-                game.act(player.next_player(), action, &mut next_state)
-                    .unwrap_unchecked()
+                Game::act(player.next_player(), action, &mut next_state).unwrap_unchecked();
             };
             let (action_value, _) = self.maximize(game, next_state, player);
 
@@ -125,7 +124,7 @@ impl MinMaxPlayer {
         (lowest_value, worst_move)
     }
 
-    fn utility(&self, maybe_winner: Option<game::Player>, player: game::Player) -> i64 {
+    fn utility(maybe_winner: Option<game::Player>, player: game::Player) -> i64 {
         match maybe_winner {
             Some(winner) => {
                 if winner == player {
