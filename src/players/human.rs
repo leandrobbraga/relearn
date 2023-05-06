@@ -11,7 +11,7 @@ use std::io;
 pub struct HumanPlayer;
 
 impl Player for HumanPlayer {
-    fn play(&self, game: &Game, state: &State, _: game::Player) -> usize {
+    fn play(&self, game: &Game, state: &State, _: game::Player) -> u8 {
         let available_moves = game.available_moves(state);
 
         println!("{state}");
@@ -20,7 +20,7 @@ impl Player for HumanPlayer {
         let mut buf = String::new();
         io::stdin().read_line(&mut buf).unwrap();
 
-        let action: usize = buf.trim().parse().unwrap();
+        let action: u8 = buf.trim().parse().unwrap();
 
         action
     }

@@ -31,7 +31,7 @@ pub struct Game;
 #[derive(Clone, Debug, Eq, Serialize, Deserialize)]
 pub struct State {
     fields: [Option<Player>; 9],
-    available_fields: Vec<usize>,
+    available_fields: Vec<u8>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -94,7 +94,7 @@ impl Game {
         }
     }
 
-    pub(crate) fn available_moves<'a>(&self, state: &'a State) -> &'a Vec<usize> {
+    pub(crate) fn available_moves<'a>(&self, state: &'a State) -> &'a Vec<u8> {
         &state.available_fields
     }
 
@@ -105,7 +105,7 @@ impl Game {
     pub(crate) fn act(
         &self,
         player: Player,
-        position: usize,
+        position: u8,
         state: &mut State,
     ) -> Result<(), MoveError> {
         state.act(player, position)
@@ -211,7 +211,13 @@ impl State {
         let available_fields = fields
             .iter()
             .enumerate()
-            .filter_map(|(idx, field)| if field.is_none() { Some(idx) } else { None })
+            .filter_map(|(idx, field)| {
+                if field.is_none() {
+                    Some(idx as u8)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         Self {
@@ -220,12 +226,12 @@ impl State {
         }
     }
 
-    fn act(&mut self, player: Player, position: usize) -> Result<(), MoveError> {
+    fn act(&mut self, player: Player, position: u8) -> Result<(), MoveError> {
         if !(0..9).contains(&position) {
             return Err(MoveError::OutOfBound);
         };
 
-        let field = &mut self.fields[position];
+        let field = &mut self.fields[position as usize];
 
         if field.is_some() {
             return Err(MoveError::NonEmptyField);
@@ -234,7 +240,7 @@ impl State {
         if let Some(index) = self
             .available_fields
             .iter()
-            .position(|value| *value == position)
+            .position(|&value| value == position)
         {
             self.available_fields.swap_remove(index);
         }

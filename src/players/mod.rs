@@ -12,7 +12,7 @@ use crate::{
 };
 
 pub trait Player: Sync + Send {
-    fn play(&self, game: &Game, state: &State, player: game::Player) -> usize;
+    fn play(&self, game: &Game, state: &State, player: game::Player) -> u8;
     fn learn(&mut self, game: &Game);
     fn save(&self) -> Result<(), ReLearnError>;
 }
