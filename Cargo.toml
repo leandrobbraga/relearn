@@ -6,7 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+ahash = { version = "*", features = ["serde"] }
 clap = { version = "4.0.15", features = ["derive"] }
-fastrand = "1.8.0"
+fastrand = "2.0.0"
 rmp-serde = "1.1.1"
 serde = { version = "1.0.147", features = ["derive"] }
+
+[profile.release]
+debug=true

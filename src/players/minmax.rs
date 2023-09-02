@@ -1,4 +1,5 @@
-use std::{collections::HashMap, fs::File};
+use ahash::AHashMap;
+use std::fs::File;
 
 use rmp_serde::Serializer;
 use serde::{Deserialize, Serialize};
@@ -25,7 +26,7 @@ pub const FILE: &str = "minmax.bin";
 
 #[derive(Serialize, Deserialize)]
 pub struct MinMaxPlayer {
-    knowledge: HashMap<State, u8>,
+    knowledge: AHashMap<State, u8>,
 }
 
 impl Player for MinMaxPlayer {
@@ -59,7 +60,7 @@ impl Player for MinMaxPlayer {
 impl MinMaxPlayer {
     pub(crate) fn new() -> Self {
         MinMaxPlayer {
-            knowledge: HashMap::new(),
+            knowledge: AHashMap::new(),
         }
     }
 
