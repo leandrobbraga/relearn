@@ -255,8 +255,22 @@ impl PartialEq for State {
 
 impl Hash for State {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        // If the implementation is correct we just care about the fields to make the State unique
-        self.fields.hash(state);
+        // The state is an array representing the board fields, containing 9 elements each with 3
+        // possibilities, Empty, Player:X and Player:O.
+        // To make hashing faster we are transforming this array in an unique integer.
+        let mut acc: u16 = 0;
+
+        for (idx, field) in self.fields.iter().enumerate() {
+            acc += match field {
+                Some(player) => match player {
+                    Player::O => 2,
+                    Player::X => 1,
+                },
+                None => 0,
+            } * u16::pow(3, idx as u32 - 1)
+        }
+
+        acc.hash(state);
     }
 }
 
