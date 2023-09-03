@@ -38,7 +38,7 @@ impl Player for MinMaxPlayer {
         unsafe {
             *self
                 .knowledge
-                .get(state.encode_state() as usize)
+                .get(state.encoded_state as usize)
                 .unwrap_unchecked()
         }
     }
@@ -98,7 +98,7 @@ impl MinMaxPlayer {
         // SAFETY: Only terminal states have `None` as the action, but in terminal states the game
         // is already finished.
         let action = unsafe { best_move.unwrap_unchecked() };
-        self.knowledge[state.encode_state() as usize] = action;
+        self.knowledge[state.encoded_state as usize] = action;
 
         (highest_value, best_move)
     }
@@ -128,7 +128,7 @@ impl MinMaxPlayer {
         // SAFETY: Only terminal states have `None` as the action, but in terminal states the game
         // is already finished.
         let action = unsafe { worst_move.unwrap_unchecked() };
-        self.knowledge[state.encode_state() as usize] = action;
+        self.knowledge[state.encoded_state as usize] = action;
 
         (lowest_value, worst_move)
     }

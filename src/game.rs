@@ -32,29 +32,7 @@ pub struct Game;
 pub struct State {
     fields: [Option<Player>; 9],
     available_fields: Vec<u8>,
-}
-
-impl State {
-    /// Encode the state in a single u16 number that can be used either for simpler hashing or for
-    /// array indexing.
-    pub fn encode_state(&self) -> u16 {
-        // The state is an array representing the board fields, containing 9 elements each with 3
-        // possibilities, Empty, Player:X and Player:O.
-        // To make hashing faster we are transforming this array in an unique integer.
-        let mut acc: u16 = 0;
-
-        for (idx, field) in self.fields.iter().enumerate() {
-            acc += match field {
-                Some(player) => match player {
-                    Player::O => 2,
-                    Player::X => 1,
-                },
-                None => 0,
-            } * u16::pow(3, idx as u32)
-        }
-
-        acc
-    }
+    pub encoded_state: u16,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -225,6 +203,7 @@ impl State {
         State {
             fields: Default::default(),
             available_fields: vec![0, 1, 2, 3, 4, 5, 6, 7, 8],
+            encoded_state: 0,
         }
     }
 
@@ -242,9 +221,25 @@ impl State {
             })
             .collect();
 
+        // The state is an array representing the board fields, containing 9 elements each with 3
+        // possibilities, Empty, Player:X and Player:O.
+        // To make hashing faster we are transforming this array in an unique integer.
+        let mut encoded_state: u16 = 0;
+
+        for (idx, field) in fields.iter().enumerate() {
+            encoded_state += match field {
+                Some(player) => match player {
+                    Player::O => 2,
+                    Player::X => 1,
+                },
+                None => 0,
+            } * u16::pow(3, idx as u32)
+        }
+
         Self {
             fields,
             available_fields,
+            encoded_state,
         }
     }
 
@@ -268,6 +263,25 @@ impl State {
         }
 
         field.replace(player);
+
+        // Since there is three possible states [None, Player::X, Player::0] for each field, we give
+        // an arbitrary number for each state [0, 1, 2] and offset it by 3 ** N, where N is the
+        // field position. This way the state is matched to a single unique u16.
+        self.encoded_state += match player {
+            Player::O => 2,
+            Player::X => 1,
+        } * match position {
+            0 => 1,
+            1 => 3,
+            2 => 9,
+            3 => 27,
+            4 => 81,
+            5 => 243,
+            6 => 729,
+            7 => 2187,
+            8 => 6561,
+            _ => panic!("The game should not have more than 9 field positions"),
+        };
 
         Ok(())
     }
