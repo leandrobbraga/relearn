@@ -34,6 +34,29 @@ pub struct State {
     available_fields: Vec<u8>,
 }
 
+impl State {
+    /// Encode the state in a single u16 number that can be used either for simpler hashing or for
+    /// array indexing.
+    pub fn encode_state(&self) -> u16 {
+        // The state is an array representing the board fields, containing 9 elements each with 3
+        // possibilities, Empty, Player:X and Player:O.
+        // To make hashing faster we are transforming this array in an unique integer.
+        let mut acc: u16 = 0;
+
+        for (idx, field) in self.fields.iter().enumerate() {
+            acc += match field {
+                Some(player) => match player {
+                    Player::O => 2,
+                    Player::X => 1,
+                },
+                None => 0,
+            } * u16::pow(3, idx as u32)
+        }
+
+        acc
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum Status {
     Finished(Option<Player>),
@@ -255,27 +278,6 @@ impl PartialEq for State {
         // We collect the available fields in a HashSet because they are not guaranteed to be
         // ordered.
         self.fields == other.fields
-    }
-}
-
-impl Hash for State {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        // The state is an array representing the board fields, containing 9 elements each with 3
-        // possibilities, Empty, Player:X and Player:O.
-        // To make hashing faster we are transforming this array in an unique integer.
-        let mut acc: u16 = 0;
-
-        for (idx, field) in self.fields.iter().enumerate() {
-            acc += match field {
-                Some(player) => match player {
-                    Player::O => 2,
-                    Player::X => 1,
-                },
-                None => 0,
-            } * u16::pow(3, idx as u32 - 1)
-        }
-
-        acc.hash(state);
     }
 }
 

@@ -1,4 +1,3 @@
-use ahash::AHashMap;
 use std::fs::File;
 
 use rmp_serde::Serializer;
@@ -21,18 +20,27 @@ use crate::{
 };
 
 use super::Player;
+use serde_big_array::BigArray;
 
 pub const FILE: &str = "minmax.bin";
+// We would only obtain this number if all fields were filled by Player::O
+pub const STATE_SIZE: usize = 19682;
 
 #[derive(Serialize, Deserialize)]
 pub struct MinMaxPlayer {
-    knowledge: AHashMap<State, u8>,
+    #[serde(with = "BigArray")]
+    knowledge: [u8; STATE_SIZE],
 }
 
 impl Player for MinMaxPlayer {
     fn play(&self, state: &State, _: game::Player) -> u8 {
         // SAFETY: We always train the player before playing
-        unsafe { *self.knowledge.get(state).unwrap_unchecked() }
+        unsafe {
+            *self
+                .knowledge
+                .get(state.encode_state() as usize)
+                .unwrap_unchecked()
+        }
     }
 
     fn learn(&mut self, game: &Game) {
@@ -60,7 +68,7 @@ impl Player for MinMaxPlayer {
 impl MinMaxPlayer {
     pub(crate) fn new() -> Self {
         MinMaxPlayer {
-            knowledge: AHashMap::new(),
+            knowledge: [u8::MAX; STATE_SIZE],
         }
     }
 
@@ -90,7 +98,7 @@ impl MinMaxPlayer {
         // SAFETY: Only terminal states have `None` as the action, but in terminal states the game
         // is already finished.
         let action = unsafe { best_move.unwrap_unchecked() };
-        self.knowledge.insert(state, action);
+        self.knowledge[state.encode_state() as usize] = action;
 
         (highest_value, best_move)
     }
@@ -120,7 +128,7 @@ impl MinMaxPlayer {
         // SAFETY: Only terminal states have `None` as the action, but in terminal states the game
         // is already finished.
         let action = unsafe { worst_move.unwrap_unchecked() };
-        self.knowledge.insert(state, action);
+        self.knowledge[state.encode_state() as usize] = action;
 
         (lowest_value, worst_move)
     }

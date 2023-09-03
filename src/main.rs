@@ -67,7 +67,8 @@ impl PlayerKind {
             PlayerKind::Human | PlayerKind::Random => Ok(self.create_player()),
             PlayerKind::MinMax => {
                 let Ok(file) = File::open(minmax::FILE) else {
-                    return Err(ReLearnError::LoadAgentError(format!("Failed to load selected agent, did you run 'cargo run -r -- learn min-max' first?")))};
+                    return Err(ReLearnError::LoadAgentError(format!("Failed to load selected agent, did you run 'cargo run -r -- learn min-max' first?")));
+                };
 
                 let mut deserializer = rmp_serde::Deserializer::new(file);
                 let player: MinMaxPlayer = serde::Deserialize::deserialize(&mut deserializer)
