@@ -106,6 +106,11 @@ impl Game {
     }
 
     fn winner(state: &State) -> Option<Player> {
+        // it's not possible to have a winner with that few plays
+        if state.available_fields.len() > 4 {
+            return None;
+        }
+
         match state.fields {
             fields![
                 X X X
